@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
-PROJECT(gpr)
+PROJECT(mo)
 
 
 # Include the sub directorys to build
@@ -12,16 +12,16 @@ OPTION(DEBUG "Generate symbols for debug" OFF)
 
 #   All headers
 SET(HRDS 
-    gpr.h
-    gpr_utils.h)
+    mo.h
+    mo_utils.h)
 SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 
 
 
 #   Define some vars, they will be used leter
 SET(SRCS 
-    gpr.c
-    gpr_utils.c
+    mo.c
+    mo_utils.c
     ${HRDS})
 SET(INCS .)
 SET(CCDEFS -DGPR_EXPORTS)
