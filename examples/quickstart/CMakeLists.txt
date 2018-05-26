@@ -23,7 +23,7 @@ ADD_EXECUTABLE(examples-quickstart quickstart-main.c)
 
 
 #   Which libs to link
-TARGET_LINK_LIBRARIES(examples-quickstart smq)
+TARGET_LINK_LIBRARIES(examples-quickstart mo)
 
 
 

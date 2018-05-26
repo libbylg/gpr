@@ -25,7 +25,7 @@ struct unit_t
     void*               ctx;
     MO_ACCEPT_CALLBACK  accept;
 
-    struct lex_t*       parent;
+    struct unit_t*      parent;
 };
 
 struct sytx_t
@@ -140,30 +140,47 @@ MO_EXTERN   struct unit_t*      mo_sytx_top     (struct sytx_t* y)
 
 MO_EXTERN   mo_errno            mo_walk(struct sytx_t* y, struct lex_t* x)
 {
-    while (1)
+    mo_action action = MO_ACTION_TRYAGAIN;
+    mo_token  token  = MO_TOKEN_ERROR;
+    
+READ_MORE:
+    token = (*(x->next))(x->ctx, x, x->token);
+    if (MO_TOKEN_ERROR == token)
     {
-        mo_token id = (*(x->next))(x->ctx, x, x->token);
-        if (MO_TOKEN_ERROR == id)
+        return 111;
+    }
+
+TRYAGAIN:
+    action = (*(y->unit_top->accept))(y->unit_top->ctx, y, x->token);
+    if (MO_ACTION_NEEDMORE == action)
+    {
+        ///!    都没没数据了，还在请求更多token，一定是bug了
+        if (MO_TOKEN_EOF == token)
         {
             return 111;
         }
-
-        mo_action action = (*(y->unit_top->accept))(y->unit_top->ctx, y, x->token);
-        if (MO_ACTION_NEEDMORE == action)
-        {
-            continue;
-        }
-
-        if (MO_ACTION_TRYAGAIN == action)
-        {
-            if (MO_TOKEN_EOF == id)
-            {
-                return 0;
-            }
-
-            goto RETRY;   
-        }
+        
+        goto READ_MORE;
     }
+
+    if (MO_ACTION_TRYAGAIN == action)
+    {
+        ///!    所有的数据接收完毕，且刚好识别完毕
+        if (MO_TOKEN_EOF == token)
+        {
+            return 0;
+        }
+        
+        goto TRYAGAIN;
+    }
+    
+    //if (MO_ACTION_ERROR == action)
+    {
+        //  TODO 遇到accept识别错误
+        return 111;
+    }
+    
+    
 }
 
 
