@@ -48,7 +48,7 @@ MO_EXTERN   struct unit_t*      mo_unit_new(void* ctx, mo_u32 (*accept)(void* ct
 
 
 
-MO_EXTERN   struct unit_t*      mo_compile(struct mo_t* m, void* ctx, int (*read)(char* data, int* len));
+MO_EXTERN   struct unit_t*      mo_compile(struct mo_t* m, void* ctx, int (*read)(void* ctx, char* data, int* len));
 MO_EXTERN   void                mo_del(struct mo_t* m);
 
 
