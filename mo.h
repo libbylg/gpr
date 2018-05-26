@@ -8,6 +8,13 @@
 #endif//
 
 
+#ifndef NULL
+#if defined(__cplusplus)
+#define NULL    (void*)(0)
+#else
+#define NULL    (0)
+#endif
+#endif
 
 
 
@@ -61,7 +68,7 @@ MO_EXTERN   void                mo_sytx_push    (struct sytx_t* y, struct unit_t
 MO_EXTERN   struct unit_t*      mo_sytx_pop     (struct sytx_t* y);
 MO_EXTERN   struct unit_t*      mo_sytx_top     (struct sytx_t* y);
 
-MO_EXTERN   int                 mo_walk(struct sytx_t* y, struct lex_t* x);
+MO_EXTERN   mo_errno            mo_walk(struct sytx_t* y, struct lex_t* x);
 
 
 

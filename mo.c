@@ -1,6 +1,8 @@
 #include "mo.h"
 
 
+#include <stdlib.h>
+
 struct stream_t
 {
     void*               ctx;
@@ -136,7 +138,7 @@ MO_EXTERN   struct unit_t*      mo_sytx_top     (struct sytx_t* y)
     return y->unit_top;
 }
 
-MO_EXTERN   int                 mo_walk(struct sytx_t* y, struct lex_t* x)
+MO_EXTERN   mo_errno            mo_walk(struct sytx_t* y, struct lex_t* x)
 {
     while (1)
     {
@@ -146,13 +148,7 @@ MO_EXTERN   int                 mo_walk(struct sytx_t* y, struct lex_t* x)
             return 111;
         }
 
-        if (MO_TOKEN_EOF == id)
-        {
-
-        }
-
-RETRY:
-        mo_action action = (y->unit_top->accep)(y->unit_top->ctx, y, x->token);
+        mo_action action = (*(y->unit_top->accept))(y->unit_top->ctx, y, x->token);
         if (MO_ACTION_NEEDMORE == action)
         {
             continue;
@@ -160,6 +156,11 @@ RETRY:
 
         if (MO_ACTION_TRYAGAIN == action)
         {
+            if (MO_TOKEN_EOF == id)
+            {
+                return 0;
+            }
+
             goto RETRY;   
         }
     }
