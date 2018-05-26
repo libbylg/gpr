@@ -78,3 +78,6 @@ CMakeFiles
 *.filters
 *.sln
 *.user
+
+*.xcodeproj
+CMakeScripts
