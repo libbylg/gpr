@@ -1,4 +1,4 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 PROJECT(examples)
 
-ADD_SUBDIRECTORY(quickstart)
+ADD_SUBDIRECTORY(examples-quickstart)

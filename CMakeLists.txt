@@ -4,6 +4,7 @@ PROJECT(mo)
 
 # Include the sub directorys to build
 ADD_SUBDIRECTORY(examples)
+ADD_SUBDIRECTORY(plugins)
 
 
 #   Define some global options
