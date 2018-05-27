@@ -39,7 +39,6 @@ ENDIF (DEBUG)
 #   Sprcial the language to c++ for VC
 IF   (MSVC)
     SET_SOURCE_FILES_PROPERTIES(${SRCS} PROPERTIES LANGUAGE CXX)
-    LIST(APPEND SRCS mo.def)
 ENDIF(MSVC)
 
 

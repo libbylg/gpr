@@ -3,148 +3,92 @@
 
 #include <stdlib.h>
 
-struct stream_t
-{
-    void*               ctx;
-    MO_READ_CALLBACK    read;
 
-    struct stream_t*    parent;
+
+
+struct sytx_t;
+
+
+
+
+struct mo_t
+{
+    struct lex_t*       lex;
+    struct sytx_t*      sytx;
+    struct result_t*    result;
 };
 
-struct lex_t
-{
-    void*               ctx;
-    MO_NEXT_CALLBACK    next;
 
-    struct stream_t*    stream_top;
-    struct token_t*     token;
-};
 
-struct unit_t
-{
-    void*               ctx;
-    MO_ACCEPT_CALLBACK  accept;
-
-    struct unit_t*      parent;
-};
 
 struct sytx_t
 {
     struct unit_t*      unit_top;
 };
 
-MO_EXTERN   struct unit_t*      mo_unit_new     (void* ctx, MO_ACCEPT_CALLBACK accept)
+
+
+MO_EXTERN   struct mo_t*        mo_new          ()
 {
-    struct unit_t* u = (struct unit_t*)malloc(sizeof(struct unit_t));
-    u->ctx        = ctx;
-    u->accept     = accept;
-    u->parent     = NULL;
-    return u;
+    struct mo_t* mo = (struct mo_t*)malloc(sizeof(struct mo_t));
+    mo->lex     =   NULL;
+    mo->sytx    =   (struct sytx_t*)malloc(sizeof(struct sytx_t));
+    mo->result  =   NULL;
+    return mo;
 }
 
-MO_EXTERN   void                mo_unit_del     (struct unit_t* u)
-{
-    if (NULL == u)
-    {
-        return;
-    }
 
-    free(u);
-    return;
+
+
+MO_EXTERN   void                mo_del          (struct mo_t* mo)
+{
+    free(mo);
 }
 
-MO_EXTERN   struct stream_t*    mo_stream_new   (void* ctx, MO_READ_CALLBACK   read)
+
+
+
+MO_EXTERN   void                mo_reg_lex      (struct mo_t* mo, struct lex_t*    x)
 {
-    struct stream_t* m = (struct stream_t*)malloc(sizeof(struct stream_t));
-    m->ctx        = ctx;
-    m->read       = read;
-    m->parent     = NULL;
-    return m;
+    mo->lex = x;
 }
 
-MO_EXTERN   void                mo_stream_del   (struct stream_t* m)
-{
-    if (NULL == m)
-    {
-        return;
-    }
 
-    free(m);
-    return;
+
+
+MO_EXTERN   void                mo_reg_result   (struct mo_t* mo, struct result_t* r)
+{
+    mo->result = r;
 }
 
-MO_EXTERN   struct lex_t*       mo_lex_new      (void* ctx, MO_NEXT_CALLBACK   next)
+
+
+
+MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m)
 {
-    struct lex_t* x = (struct lex_t*)malloc(sizeof(struct stream_t));
-    x->ctx        = ctx;
-    x->next       = next;
-    x->stream_top = NULL;
-    return x;
+    m->parent          = mo->sytx->unit_top;
+    mo->sytx->unit_top = m;
 }
 
-MO_EXTERN   void                mo_lex_del      (struct lex_t* x)
-{
-    if (NULL == x)
-    {
-        return;
-    }
 
-    free(x);
-    return;
+
+
+MO_EXTERN   void                mo_push_unit    (struct mo_t* mo, struct unit_t*   u)
+{
+    u->parent = mo->sytx->unit_top;
+    mo->sytx->unit_top = u;
 }
 
-MO_EXTERN   void                mo_lex_put      (struct lex_t* x, struct stream_t* m)
-{
-    m->parent     = x->stream_top;
-    x->stream_top = m;
-}
 
-MO_EXTERN   struct sytx_t*      mo_sytx_new     ()
-{
-    struct sytx_t* y = (struct sytx_t*)malloc(sizeof(struct sytx_t));
-    y->unit_top = NULL;
-    return y;
-}
 
-MO_EXTERN   void                mo_sytx_del     (struct sytx_t* y)
-{
-    if (NULL == y)
-    {
-        return;
-    }
 
-    free(y);
-}
-
-MO_EXTERN   void                mo_sytx_push    (struct sytx_t* y, struct unit_t* u)
-{
-    u->parent = y->unit_top;
-    y->unit_top = u;
-}
-
-MO_EXTERN   struct unit_t*      mo_sytx_pop     (struct sytx_t* y)
-{
-    struct unit_t* u = y->unit_top;
-    if (NULL != y->unit_top)
-    {
-        y->unit_top = y->unit_top->parent;
-    }
-
-    return u;
-}
-
-MO_EXTERN   struct unit_t*      mo_sytx_top     (struct sytx_t* y)
-{
-    return y->unit_top;
-}
-
-MO_EXTERN   mo_errno            mo_walk(struct sytx_t* y, struct lex_t* x)
+MO_EXTERN   mo_errno            mo_walk(struct mo_t* mo)
 {
     mo_action action = MO_ACTION_TRYAGAIN;
     mo_token  token  = MO_TOKEN_ERROR;
     
 READ_MORE:
-    token = (*(x->next))(x->ctx, x, x->token);
+    token = (*(mo->lex->next))(mo->lex, x->token);
     if (MO_TOKEN_ERROR == token)
     {
         return 111;
