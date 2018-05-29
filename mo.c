@@ -16,6 +16,7 @@ struct mo_t
     struct lex_t*       lex;
     struct sytx_t*      sytx;
     struct result_t*    result;
+    struct token_t*     token;
 };
 
 
@@ -66,7 +67,7 @@ MO_EXTERN   void                mo_reg_result   (struct mo_t* mo, struct result_
 
 MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m)
 {
-    m->parent          = mo->sytx->unit_top;
+    m->prev            = mo->sytx->unit_top;
     mo->sytx->unit_top = m;
 }
 
@@ -75,8 +76,31 @@ MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_
 
 MO_EXTERN   void                mo_push_unit    (struct mo_t* mo, struct unit_t*   u)
 {
-    u->parent = mo->sytx->unit_top;
+    u->prev = mo->sytx->unit_top;
     mo->sytx->unit_top = u;
+}
+
+
+
+
+MO_EXTERN   struct unit_t*      mo_pop_unit     (struct mo_t* mo)
+{
+    if (NULL == mo->sytx->unit_top)
+    {
+        return NULL;
+    }
+
+    struct unit_t* top = mo->sytx->unit_top;
+    mo->sytx->unit_top = mo->sytx->unit_top->prev;
+    return top;
+}
+
+
+
+
+MO_EXTERN   struct unit_t*      mo_top_unit     (struct mo_t* mo)
+{
+    return mo->sytx->unit_top;
 }
 
 
@@ -88,14 +112,14 @@ MO_EXTERN   mo_errno            mo_walk(struct mo_t* mo)
     mo_token  token  = MO_TOKEN_ERROR;
     
 READ_MORE:
-    token = (*(mo->lex->next))(mo->lex, x->token);
+    token = (*(mo->lex->next))(mo->lex, mo->token);
     if (MO_TOKEN_ERROR == token)
     {
         return 111;
     }
 
 TRYAGAIN:
-    action = (*(y->unit_top->accept))(y->unit_top->ctx, y, x->token);
+    action = (*(mo->sytx->unit_top->accept))(mo->sytx->unit_top, mo->token);
     if (MO_ACTION_NEEDMORE == action)
     {
         ///!    都没没数据了，还在请求更多token，一定是bug了

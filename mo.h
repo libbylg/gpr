@@ -102,7 +102,7 @@ typedef     int       (*MO_READ_CALLBACK  )(struct stream_t* m, char* buf, int* 
 struct stream_t
 {
     int                 size;
-    struct stream_t*    parent;
+    struct stream_t*    prev;
     MO_DEL_CALLBACK     del;
     MO_READ_CALLBACK    read;
 };
@@ -115,7 +115,7 @@ typedef     mo_action (*MO_ACCEPT_CALLBACK)(struct unit_t*   u, struct token_t* 
 struct unit_t
 {
     int                 size;
-    struct unit_t*      parent;
+    struct unit_t*      prev;
     MO_DEL_CALLBACK     del;
     MO_ACCEPT_CALLBACK  accept;
 };
@@ -129,6 +129,8 @@ MO_EXTERN   void                mo_reg_lex      (struct mo_t* mo, struct lex_t* 
 MO_EXTERN   void                mo_reg_result   (struct mo_t* mo, struct result_t* r);
 MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m);
 MO_EXTERN   void                mo_push_unit    (struct mo_t* mo, struct unit_t*   u);
+MO_EXTERN   struct unit_t*      mo_pop_unit     (struct mo_t* mo);
+MO_EXTERN   struct unit_t*      mo_top_unit     (struct mo_t* mo);
 MO_EXTERN   mo_errno            mo_walk         (struct mo_t* mo);
 
 
