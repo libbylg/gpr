@@ -113,7 +113,7 @@ MO_EXTERN   void                mo_reg_result   (struct mo_t* mo, struct result_
 
 MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m)
 {
-    struct param_t* params = mo_get_params(mo);
+    struct params_t* params = mo_get_params(mo);
     struct cache_t* cache  = mo_cache_new(m, params->cache_size);
     cache->prev = mo->lex->cache_top;
     mo->lex->cache_top = cache;

@@ -11,8 +11,7 @@ SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 
 
 #   All sources
-SET(SRCS    protobuf_units.c 
-            protobuf_stream.c 
+SET(SRCS    protobuf_units.c
             protobuf_lex.c
             protobuf_demo.c
             ${HRDS}
