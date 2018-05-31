@@ -61,6 +61,12 @@ typedef     void      (*MO_DEL_CALLBACK   )(void* obj);
 
 
 
+///!    核心参数
+struct params_t
+{
+    int cache_size;
+};
+
 
 ///!    词法识别出来的符号
 struct token_t
@@ -84,12 +90,30 @@ struct result_t
 
 
 
+///!    cache 管理
+struct cache_t
+{
+    int                 size;
+    MO_DEL_CALLBACK     del;
+    struct cache_t*     prev;       ///<   前一个cache
+    struct stream_t*    stream;     ///<    每个cache都对应一个输入流
+    int                 cache_size; ///<    数据缓冲区的总大小
+    char*               cache;      ///<    数据缓冲区
+    char*               pc;         ///<    当前识别位置指针
+    char*               pe;         ///<    有效数据结束位置
+    char*               line;       ///<    行起始位置
+    int                 lino;       ///<    行号
+};
+
+
+
+
 ///!    词法分析对象
 typedef     mo_token  (*MO_NEXT_CALLBACK  )(struct lex_t*    x, struct token_t* t);
 struct lex_t
 {
     int                 size;
-    struct stream_t*    stream_top;
+    struct cache_t*     cache_top;
     MO_DEL_CALLBACK     del;
     MO_NEXT_CALLBACK    next;
 };
@@ -98,11 +122,13 @@ struct lex_t
 
 
 ///!    输入流对象
-typedef     int       (*MO_READ_CALLBACK  )(struct stream_t* m, char* buf, int* len);
+#define MO_READ_OK      (0)
+#define MO_READ_EOF     (1)
+#define MO_READ_ERROR   (2)
+typedef     int       (*MO_READ_CALLBACK  )(struct stream_t* m, char** pos, char* end);
 struct stream_t
 {
     int                 size;
-    struct stream_t*    prev;
     MO_DEL_CALLBACK     del;
     MO_READ_CALLBACK    read;
 };
@@ -123,8 +149,10 @@ struct unit_t
 
 
 
+
 MO_EXTERN   struct mo_t*        mo_new          ();
 MO_EXTERN   void                mo_del          (struct mo_t* mo);
+MO_EXTERN   struct params_t*    mo_get_params   (struct mo_t* mo);
 MO_EXTERN   void                mo_reg_lex      (struct mo_t* mo, struct lex_t*    x);
 MO_EXTERN   void                mo_reg_result   (struct mo_t* mo, struct result_t* r);
 MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m);
@@ -134,7 +162,8 @@ MO_EXTERN   struct unit_t*      mo_top_unit     (struct mo_t* mo);
 MO_EXTERN   mo_errno            mo_walk         (struct mo_t* mo);
 
 
-
+MO_EXTERN   struct stream_t*    mo_stream_file_new  (char* filename);
+MO_EXTERN   struct stream_t*    mo_stream_string_new(char* str, int size, int auto_free);
 
 #endif//__mo_
 

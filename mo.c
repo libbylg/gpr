@@ -15,8 +15,8 @@ struct mo_t
 {
     struct lex_t*       lex;
     struct sytx_t*      sytx;
-    struct result_t*    result;
     struct token_t*     token;
+    struct result_t*    result;
 };
 
 
@@ -28,6 +28,52 @@ struct sytx_t
 };
 
 
+
+
+static void             mo_cache_del(void* obj)
+{
+    struct cache_t* cache = (struct cache_t*)obj;
+    if (NULL != cache->stream)
+    {
+        (cache->stream->del)(cache->stream);
+    }
+
+    if (NULL != cache)
+    {
+        free(cache->cache);
+    }
+
+    free(cache);
+}
+
+static struct cache_t* mo_cache_new(struct stream_t* stream, int init_cache_size)
+{
+    char* buf = (char*)malloc(sizeof(char) * init_cache_size);
+    if (NULL == buf)
+    {
+        return NULL;
+    }
+
+    struct cache_t* cache = (struct cache_t*)malloc(sizeof(struct cache_t));
+    if (NULL == cache)
+    {
+        free(buf);
+        return NULL;
+    }
+
+    cache->size         =   sizeof(struct cache_t);
+    cache->del          =   mo_cache_del;
+    cache->prev         =   NULL;
+    cache->stream       =   stream;
+    cache->cache_size   =   init_cache_size;
+    cache->cache        =   buf;
+    cache->pc           =   buf;
+    cache->pe           =   buf;
+    cache->line         =   buf;
+    cache->lino         =   -1;
+
+    return cache;
+}
 
 MO_EXTERN   struct mo_t*        mo_new          ()
 {
@@ -67,8 +113,10 @@ MO_EXTERN   void                mo_reg_result   (struct mo_t* mo, struct result_
 
 MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m)
 {
-    m->prev            = mo->sytx->unit_top;
-    mo->sytx->unit_top = m;
+    struct param_t* params = mo_get_params(mo);
+    struct cache_t* cache  = mo_cache_new(m, params->cache_size);
+    cache->prev = mo->lex->cache_top;
+    mo->lex->cache_top = cache;
 }
 
 
