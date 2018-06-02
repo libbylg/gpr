@@ -91,6 +91,7 @@ struct result_t
 
 
 ///!    cache 管理
+#define MO_CACHE_
 struct cache_t
 {
     int                 size;
@@ -99,6 +100,7 @@ struct cache_t
     struct stream_t*    stream;     ///<    每个cache都对应一个输入流
     int                 cache_size; ///<    数据缓冲区的总大小
     char*               cache;      ///<    数据缓冲区
+    char*               limit;      ///<    cache中可用来缓存数据的位置
     char*               pc;         ///<    当前识别位置指针
     char*               pe;         ///<    有效数据结束位置
     char*               line;       ///<    行起始位置

@@ -45,7 +45,7 @@ struct protobuf_token_t
 #define MO_TOKEN_package    315     //  package
 #define MO_TOKEN_option     316     //  option
 #define MO_TOKEN_returns    317     //  returns
-
+#define MO_TOKEN_ERROR      999     //  遇到错误
 
     //      double
     //      float

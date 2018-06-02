@@ -13,6 +13,14 @@ static void      protobuf_lex_del(void* obj)
 ///!    定位到第一个非注释非空白处
 static void      protobuf_lex_locate(struct lex_t*    x)
 {
+    if (NULL == x->cache_top)
+    {
+        return MO_TOKEN_ERROR;
+    }
+
+    struct cache_t*  cache  = x->cache_top;
+    struct stream_t* stream = x->cache_top->stream;
+    (*(stream->read))(stream, cache->pe, cache->limit);
 
 }
 
