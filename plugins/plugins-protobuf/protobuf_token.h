@@ -64,5 +64,19 @@ struct protobuf_token_t
     //      bytes
 
 
+
+
+enum
+{
+    CM_DEC      =   0x0001,
+    CM_HEX      =   0x0002,
+    CM_NEWLINE  =   0x0004,
+    CM_SPACE    =   0x0008,
+
+    CM_ALPHA    =   0x0010,
+    CM_ALPHA    =   0x0020,
+};
+MO_EXTERN short cm[256];
+
 #endif//__protobuf_token_
 

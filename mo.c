@@ -40,15 +40,16 @@ static void             mo_cache_del(void* obj)
 
     if (NULL != cache)
     {
-        free(cache->cache);
+        free(cache->buf);
     }
 
     free(cache);
 }
 
-static struct cache_t* mo_cache_new(struct stream_t* stream, int init_cache_size)
+static struct cache_t* mo_cache_new(struct stream_t* stream, int init_buf_size)
 {
-    char* buf = (char*)malloc(sizeof(char) * init_cache_size);
+    int real_size = init_buf_size + MO_TOKEN_LIMIT + 1;
+    char* buf = (char*)malloc(sizeof(char) * (real_size));
     if (NULL == buf)
     {
         return NULL;
@@ -65,12 +66,18 @@ static struct cache_t* mo_cache_new(struct stream_t* stream, int init_cache_size
     cache->del          =   mo_cache_del;
     cache->prev         =   NULL;
     cache->stream       =   stream;
-    cache->cache_size   =   init_cache_size;
-    cache->cache        =   buf;
+    cache->buf_size     =   init_buf_size;
+    cache->buf          =   buf;
+    cache->buf_limit    =   cache->buf + init_buf_size;
     cache->pc           =   buf;
     cache->pe           =   buf;
     cache->line         =   buf;
     cache->lino         =   -1;
+
+    ///!    填充几个守卫的值
+    *(cache->pe)                =   '\n';
+    *(cache->buf_limit)         =   '\n';
+    cache->buf[real_size - 1]   =   '\n';
 
     return cache;
 }
