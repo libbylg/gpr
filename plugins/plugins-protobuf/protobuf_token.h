@@ -27,9 +27,9 @@ struct protobuf_token_t
 //                                  //  >
 #define MO_TOKEN_STRING     200     //  "xxxx"
 #define MO_TOKEN_INTEGER    201     //  12345
-#define MO_TOKEN_MESSAGE    301     //  message
-#define MO_TOKEN_SERVICE    301     //  service
-#define MO_TOKEN_REQUIRED   302     //  required
+#define MO_TOKEN_message    301     //  message
+#define MO_TOKEN_service    301     //  service
+#define MO_TOKEN_required   302     //  required
 #define MO_TOKEN_optional   303     //  optional
 #define MO_TOKEN_repeated   304     //  repeated
 #define MO_TOKEN_rpc        305     //  rpc
@@ -74,7 +74,7 @@ enum
     CM_SPACE    =   0x0008,
 
     CM_ALPHA    =   0x0010,
-    CM_ALPHA    =   0x0020,
+    CM_ALPHAx   =   0x0020,
 };
 MO_EXTERN short cm[256];
 

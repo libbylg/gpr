@@ -2,7 +2,7 @@
 
 
 #include <stdlib.h>
-
+#include <stdarg.h>
 
 
 
@@ -208,3 +208,87 @@ TRYAGAIN:
 
 
 
+
+MO_EXTERN int mo_cache_load(struct cache_t*    cache)
+{
+    struct stream_t* stream = cache->stream;
+
+    ///!    如果缓冲区中还有数据，那么需要将数据移动到buf首部
+    int len = (cache->pe - cache->pc);
+    //if ((len > 0) && (len <= MO_TOKEN_LIMIT)) ///<    如果token本身比较短，那么可以考虑做一次数据迁移
+    if (len > 0)
+    {
+        memmove(cache->buf, cache->pc, len);
+        cache->line -= (cache->pc - cache->buf);
+        cache->pc = cache->buf;
+        cache->pe = cache->pc + len;
+    }
+
+    ///!    开始从文件读取数据
+    int ret = (*(stream->read))(stream, &(cache->pe), cache->buf_limit);
+    if (MO_READ_OK != ret)
+    {
+        return ret;
+    }
+
+    *(cache->pe) = '\n';
+    return MO_READ_OK;
+}
+
+
+
+
+MO_EXTERN   void   mo_push_result  (struct mo_t* mo, struct result_t* r)
+{
+    r->prev    = mo->result;
+    mo->result = r->prev;
+}
+
+
+
+
+MO_EXTERN   struct result_t*    mo_result_new   (char* module, int value, char* format, ...)
+{
+    struct result_t* r = (struct result_t*)malloc(sizeof(struct result_t));
+
+    ///!    如果是成功
+    if (0 == value)
+    {
+        r->value     = 0;
+        r->module[0] = '\0';
+        r->text[0]   = '\0';
+        return r;
+    }
+
+
+    module = (NULL == module)?"":module;
+    format = (NULL == format)?"":format;
+
+
+    ///!    如果是失败
+    r->value = value;
+    strncpy(r->module, module, sizeof(r->module));
+    r->module[sizeof(r->module) - 1] = '\0';
+
+
+    ///!    格式化输出
+    va_list valist;
+    va_start(valist, format);
+    vsnprintf(r->text, sizeof(r->text), format, valist);
+    va_end(valist);
+    r->text[sizeof(r->text) - 1] = '\0';
+
+
+    return r;
+}
+
+
+
+
+MO_EXTERN   void   mo_clear_result  (struct mo_t* mo)
+{
+    for (struct result_t* r = mo->result; NULL != r; r = mo->result)
+    {
+        free(r);
+    }
+}

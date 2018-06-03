@@ -82,9 +82,10 @@ struct token_t
 ///!    词法和语法解析结果
 struct result_t
 {
-    int                 size;
-    MO_DEL_CALLBACK     del;
-    char                text[0];
+    struct result_t*    prev;
+    int                 value;
+    char                module[10];
+    char                text[500];
 };
 
 
@@ -98,6 +99,7 @@ struct cache_t
     MO_DEL_CALLBACK     del;
     struct cache_t*     prev;       ///<   前一个cache
     struct stream_t*    stream;     ///<    每个cache都对应一个输入流
+    struct mo_t*        mo;
     int                 buf_size;   ///<    数据缓冲区的总大小
     char*               buf;        ///<    数据缓冲区
     char*               buf_limit;  ///<    cache中可用来缓存数据的位置
@@ -116,6 +118,7 @@ struct lex_t
 {
     int                 size;
     struct cache_t*     cache_top;
+    struct mo_t*        mo;
     MO_DEL_CALLBACK     del;
     MO_NEXT_CALLBACK    next;
 };
@@ -131,6 +134,7 @@ typedef     int       (*MO_READ_CALLBACK  )(struct stream_t* m, char** pos, char
 struct stream_t
 {
     int                 size;
+    struct mo_t*        mo;
     MO_DEL_CALLBACK     del;
     MO_READ_CALLBACK    read;
 };
@@ -144,6 +148,7 @@ struct unit_t
 {
     int                 size;
     struct unit_t*      prev;
+    struct mo_t*        mo;
     MO_DEL_CALLBACK     del;
     MO_ACCEPT_CALLBACK  accept;
 };
@@ -164,8 +169,17 @@ MO_EXTERN   struct unit_t*      mo_top_unit     (struct mo_t* mo);
 MO_EXTERN   mo_errno            mo_walk         (struct mo_t* mo);
 
 
+MO_EXTERN   struct result_t*    mo_result_new   (char* module, int value, char* format, ...);
+MO_EXTERN   void                mo_push_result  (struct mo_t* mo, struct result_t* r);
+MO_EXTERN   void                mo_clear_result (struct mo_t* mo);
+
+
 MO_EXTERN   struct stream_t*    mo_stream_file_new  (char* filename);
 MO_EXTERN   struct stream_t*    mo_stream_string_new(char* str, int size, int auto_free);
+
+
+MO_EXTERN   int                 mo_cache_load(struct cache_t* c); ///<    从流中加载数据
+
 
 #endif//__mo_
 
