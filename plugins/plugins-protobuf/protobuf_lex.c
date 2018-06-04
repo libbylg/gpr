@@ -124,220 +124,204 @@ RETRY:
     {
     case '{':  case '}':  case  '(':  case ')':  case  ';':
     case ',':  case '=':  case  '<':  case '>':  
-        {
-            return protobuf_lex_setup_token(x, t, 1, *pc);   
-        }
+        return protobuf_lex_setup_token(x, t, 1, *pc);   
     case 'e':   //  enum    exit    extensions  extend
+        if ( ('n' == pc[1])  
+        &&   ('u' == pc[2])  
+        &&   ('m' == pc[3]) 
+        &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
         {
-            if ( ('n' == pc[1])  
-            &&   ('u' == pc[2])  
-            &&   ('m' == pc[3]) 
-            &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 4, MO_TOKEN_enum);
-            }
-
-            if ( ('x' == pc[1])  
-            &&   ('i' == pc[2])  
-            &&   ('t' == pc[3]) 
-            &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 4,  MO_TOKEN_exit);
-            }
-
-            if ( ('x' == pc[1])  
-            &&   ('t' == pc[2])  
-            &&   ('e' == pc[3]) 
-            &&   ('n' == pc[4]) 
-            &&   ('d' == pc[5]) 
-            &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_extend);
-            }
-
-            if ( ('x' == pc[1])  
-            &&   ('t' == pc[2])  
-            &&   ('e' == pc[3]) 
-            &&   ('n' == pc[4]) 
-            &&   ('s' == pc[5]) 
-            &&   ('i' == pc[6]) 
-            &&   ('o' == pc[7]) 
-            &&   ('n' == pc[8]) 
-            &&   ('s' == pc[9]) 
-            &&   (0 == (cm[pc[10]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 10,  MO_TOKEN_extensions);
-            }
-
-            return protobuf_try_name();
+            return protobuf_lex_setup_token(x, t, 4, MO_TOKEN_enum);
         }
+
+        if ( ('x' == pc[1])  
+        &&   ('i' == pc[2])  
+        &&   ('t' == pc[3]) 
+        &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 4,  MO_TOKEN_exit);
+        }
+
+        if ( ('x' == pc[1])  
+        &&   ('t' == pc[2])  
+        &&   ('e' == pc[3]) 
+        &&   ('n' == pc[4]) 
+        &&   ('d' == pc[5]) 
+        &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_extend);
+        }
+
+        if ( ('x' == pc[1])  
+        &&   ('t' == pc[2])  
+        &&   ('e' == pc[3]) 
+        &&   ('n' == pc[4]) 
+        &&   ('s' == pc[5]) 
+        &&   ('i' == pc[6]) 
+        &&   ('o' == pc[7]) 
+        &&   ('n' == pc[8]) 
+        &&   ('s' == pc[9]) 
+        &&   (0 == (cm[pc[10]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 10,  MO_TOKEN_extensions);
+        }
+
+        return protobuf_try_name();
     case 'i':   //  init        import
+        if ( ('n' == pc[1])  
+        &&   ('i' == pc[2])  
+        &&   ('t' == pc[3]) 
+        &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
         {
-            if ( ('n' == pc[1])  
-            &&   ('i' == pc[2])  
-            &&   ('t' == pc[3]) 
-            &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 4,  MO_TOKEN_init);
-            }
-
-            if ( ('m' == pc[1])  
-            &&   ('p' == pc[2])  
-            &&   ('o' == pc[3]) 
-            &&   ('r' == pc[4]) 
-            &&   ('t' == pc[5]) 
-            &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_import);
-            }
-
-            return protobuf_try_name();
+            return protobuf_lex_setup_token(x, t, 4,  MO_TOKEN_init);
         }
+
+        if ( ('m' == pc[1])  
+        &&   ('p' == pc[2])  
+        &&   ('o' == pc[3]) 
+        &&   ('r' == pc[4]) 
+        &&   ('t' == pc[5]) 
+        &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_import);
+        }
+
+        return protobuf_try_name();
     case 'm':   //  map     message
+        if ( ('a' == pc[1])  
+        &&   ('p' == pc[2])  
+        &&   (0 == (cm[pc[3]]&(CM_ALPHA|CM_DEC))) )
         {
-            if ( ('a' == pc[1])  
-            &&   ('p' == pc[2])  
-            &&   (0 == (cm[pc[3]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_map);
-            }
-
-            if ( ('e' == pc[1])  
-            &&   ('s' == pc[2])  
-            &&   ('s' == pc[3]) 
-            &&   ('a' == pc[4]) 
-            &&   ('g' == pc[5]) 
-            &&   ('e' == pc[6]) 
-            &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_message);
-            }
-
-            return protobuf_try_name();
+            return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_map);
         }
+
+        if ( ('e' == pc[1])  
+        &&   ('s' == pc[2])  
+        &&   ('s' == pc[3]) 
+        &&   ('a' == pc[4]) 
+        &&   ('g' == pc[5]) 
+        &&   ('e' == pc[6]) 
+        &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_message);
+        }
+
+        return protobuf_try_name();
     case 'o':   //  oneof   optional    option
+        if ( ('n' == pc[1])  
+        &&   ('e' == pc[2])  
+        &&   ('o' == pc[3])  
+        &&   ('f' == pc[4])  
+        &&   (0 == (cm[pc[5]]&(CM_ALPHA|CM_DEC))) )
         {
-            if ( ('n' == pc[1])  
-            &&   ('e' == pc[2])  
-            &&   ('o' == pc[3])  
-            &&   ('f' == pc[4])  
-            &&   (0 == (cm[pc[5]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 5,  MO_TOKEN_oneof);
-            }
-
-            if ( ('p' == pc[1])  
-            &&   ('t' == pc[2])  
-            &&   ('i' == pc[3]) 
-            &&   ('o' == pc[4]) 
-            &&   ('n' == pc[5]) 
-            &&   ('a' == pc[6]) 
-            &&   ('l' == pc[7]) 
-            &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_optional);
-            }
-
-            if ( ('p' == pc[1])  
-            &&   ('t' == pc[2])  
-            &&   ('i' == pc[3]) 
-            &&   ('o' == pc[4]) 
-            &&   ('n' == pc[5]) 
-            &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_option);
-            }
-
-            return protobuf_try_name();   
+            return protobuf_lex_setup_token(x, t, 5,  MO_TOKEN_oneof);
         }
+
+        if ( ('p' == pc[1])  
+        &&   ('t' == pc[2])  
+        &&   ('i' == pc[3]) 
+        &&   ('o' == pc[4]) 
+        &&   ('n' == pc[5]) 
+        &&   ('a' == pc[6]) 
+        &&   ('l' == pc[7]) 
+        &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_optional);
+        }
+
+        if ( ('p' == pc[1])  
+        &&   ('t' == pc[2])  
+        &&   ('i' == pc[3]) 
+        &&   ('o' == pc[4]) 
+        &&   ('n' == pc[5]) 
+        &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_option);
+        }
+
+        return protobuf_try_name();   
     case 'p':   //  package
+        if ( ('a' == pc[1])  
+        &&   ('c' == pc[2])  
+        &&   ('k' == pc[3]) 
+        &&   ('a' == pc[4]) 
+        &&   ('g' == pc[5]) 
+        &&   ('e' == pc[6]) 
+        &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
         {
-            if ( ('a' == pc[1])  
-            &&   ('c' == pc[2])  
-            &&   ('k' == pc[3]) 
-            &&   ('a' == pc[4]) 
-            &&   ('g' == pc[5]) 
-            &&   ('e' == pc[6]) 
-            &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_package);
-            }
-
-            return protobuf_try_name();   
+            return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_package);
         }
+
+        return protobuf_try_name();   
     case 'r':   //  repeated    required    reserved    returns rpc
+        if ( ('e' == pc[1])  
+        &&   ('p' == pc[2])  
+        &&   ('e' == pc[3]) 
+        &&   ('a' == pc[4]) 
+        &&   ('t' == pc[5]) 
+        &&   ('e' == pc[6]) 
+        &&   ('d' == pc[7]) 
+        &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
         {
-            if ( ('e' == pc[1])  
-            &&   ('p' == pc[2])  
-            &&   ('e' == pc[3]) 
-            &&   ('a' == pc[4]) 
-            &&   ('t' == pc[5]) 
-            &&   ('e' == pc[6]) 
-            &&   ('d' == pc[7]) 
-            &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_repeated);
-            }
-
-            if ( ('e' == pc[1])  
-            &&   ('q' == pc[2])  
-            &&   ('u' == pc[3]) 
-            &&   ('i' == pc[4]) 
-            &&   ('r' == pc[5]) 
-            &&   ('e' == pc[6]) 
-            &&   ('d' == pc[7]) 
-            &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_required);
-            }
-
-            if ( ('e' == pc[1])  
-            &&   ('s' == pc[2])  
-            &&   ('e' == pc[3]) 
-            &&   ('r' == pc[4]) 
-            &&   ('v' == pc[5]) 
-            &&   ('e' == pc[6]) 
-            &&   ('d' == pc[7]) 
-            &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_reserved);
-            }
-
-            if ( ('e' == pc[1])  
-            &&   ('t' == pc[2])  
-            &&   ('u' == pc[3]) 
-            &&   ('r' == pc[4]) 
-            &&   ('n' == pc[5]) 
-            &&   ('s' == pc[6]) 
-            &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_returns);
-            }
-
-            if ( ('p' == pc[1])  
-            &&   ('c' == pc[2])  
-            &&   (0 == (cm[pc[3]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_rpc);
-            }
-
-            return protobuf_try_name();   
+            return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_repeated);
         }
+
+        if ( ('e' == pc[1])  
+        &&   ('q' == pc[2])  
+        &&   ('u' == pc[3]) 
+        &&   ('i' == pc[4]) 
+        &&   ('r' == pc[5]) 
+        &&   ('e' == pc[6]) 
+        &&   ('d' == pc[7]) 
+        &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_required);
+        }
+
+        if ( ('e' == pc[1])  
+        &&   ('s' == pc[2])  
+        &&   ('e' == pc[3]) 
+        &&   ('r' == pc[4]) 
+        &&   ('v' == pc[5]) 
+        &&   ('e' == pc[6]) 
+        &&   ('d' == pc[7]) 
+        &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_reserved);
+        }
+
+        if ( ('e' == pc[1])  
+        &&   ('t' == pc[2])  
+        &&   ('u' == pc[3]) 
+        &&   ('r' == pc[4]) 
+        &&   ('n' == pc[5]) 
+        &&   ('s' == pc[6]) 
+        &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_returns);
+        }
+
+        if ( ('p' == pc[1])  
+        &&   ('c' == pc[2])  
+        &&   (0 == (cm[pc[3]]&(CM_ALPHA|CM_DEC))) )
+        {
+            return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_rpc);
+        }
+
+        return protobuf_try_name();   
     case 's':   //  service
+        if ( ('e' == pc[1])  
+        &&   ('r' == pc[2])  
+        && ( ('v' == pc[3])  
+        &&   ('i' == pc[4])  
+        && ( ('c' == pc[5])  
+        &&   ('e' == pc[6])  
+        &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
         {
-            if ( ('e' == pc[1])  
-            &&   ('r' == pc[2])  
-            if ( ('v' == pc[3])  
-            &&   ('i' == pc[4])  
-            if ( ('c' == pc[5])  
-            &&   ('e' == pc[6])  
-            &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
-            {
-                return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_service);
-            }
-
-            return protobuf_try_name();   
+            return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_service);
         }
+
+        return protobuf_try_name();   
     case 'a':  case 'b':  case 'c':  case 'd':/*case 'e':*/
     case 'f':  case 'g':  case 'h':  case 'j':/*case 'i':*/
     case 'k':  case 'l':/*case 'm':*/case 'n':/*case 'o':*/
@@ -358,10 +342,27 @@ RETRY:
     case '"':
         return protobuf_try_string();
     case '/':
-        protobuf_try_comment();
-        goto RETRY; 
+        if ('*' == pc[1])  
+        {
+            if (0 != protobuf_try_comment_range(x, t, 7,  MO_TOKEN_service))
+            {
+                mo_push_result(mo_result_new("lex", 111, "invalid range comment"));
+                return MO_TOKEN_ERROR;
+            }
+
+            goto RETRY;
+        }
+
+        if ('/' == pc[1])
+        {
+            protobuf_try_comment_line();
+            goto RETRY; 
+        }
+        
+        //mo_push_result(mo_result_new("lex", 111, "invalid char for lex '0x%.2D'", (unsigned int)(*pc)));
+        //return MO_TOKEN_ERROR;
     default:
-        mo_push_result(mo_result_new("lex", 111, "unrecogenized char '0x%.2D'", (unsigned int)(*pc)));
+        mo_push_result(mo_result_new("lex", 111, "invalid char for lex '0x%.2D'", (unsigned int)(*pc)));
         return MO_TOKEN_ERROR;
     }
 }
