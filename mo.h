@@ -71,7 +71,7 @@ struct params_t
 ///!    词法识别出来的符号
 struct token_t
 {
-    int                 size;
+    int                 size;       ///<    整个token所占的存储空间
     mo_token            token;      ///<    符号的编号
     char*               text[2];    ///<    符号的文本范围
 };

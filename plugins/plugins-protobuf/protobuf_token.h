@@ -77,11 +77,11 @@ enum
     CM_HEX      =   0x0002,
     CM_NEWLINE  =   0x0004,
     CM_SPACE    =   0x0008,
-
     CM_ALPHA    =   0x0010,
     CM_ALPHAx   =   0x0020,
+    CM_STRFLAG =   0x0040
 };
-MO_EXTERN short cm[256];
+MO_EXTERN unsigned short cm[256];
 
 #endif//__protobuf_token_
 

@@ -23,6 +23,8 @@ SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 SET(SRCS
     mo.c
     mo_utils.c
+    mo_stream_file.c
+    mo_stream_string.c
     ${HRDS})
 SET(INCS .)
 SET(CCDEFS -DMO_EXPORTS)
