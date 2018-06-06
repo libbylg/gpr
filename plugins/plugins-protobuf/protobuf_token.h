@@ -49,8 +49,8 @@ struct protobuf_token_t
 //  下面都是字面量或者用户定义的名字
 #define MO_TOKEN_STRING         400     //  "xxxx"
 #define MO_TOKEN_INTEGER        401     //  12345
-#define MO_TOKEN_NAME           402     /// 一个名字
-
+#define MO_TOKEN_NAME           402     //  一个名字
+#define MO_TOKEN_COMMENT        403     //  一个注释
 
     //      double
     //      float
@@ -73,13 +73,14 @@ struct protobuf_token_t
 
 enum
 {
-    CM_DEC      =   0x0001,
-    CM_HEX      =   0x0002,
-    CM_NEWLINE  =   0x0004,
-    CM_SPACE    =   0x0008,
-    CM_ALPHA    =   0x0010,
-    CM_ALPHAx   =   0x0020,
-    CM_STRFLAG =   0x0040
+    CM_DEC          =   0x0001,
+    CM_HEX          =   0x0002,
+    CM_NEWLINE      =   0x0004,
+    CM_SPACE        =   0x0008,
+    CM_ALPHA        =   0x0010,
+    //CM_ALPHAx       =   0x0020,
+    CM_STRING_FLAG  =   0x0040,
+    CM_COMMENT_FLAG =   0x0080,
 };
 MO_EXTERN unsigned short cm[256];
 
