@@ -5,7 +5,6 @@
 #include "mo.h"
 
 
-
 struct protobuf_lex_t
 {
     struct lex_t    super;
@@ -13,6 +12,6 @@ struct protobuf_lex_t
 MO_EXTERN   struct protobuf_lex_t* protobuf_lex_new(int init_cache_size);
 
 
-#endif//__protobuf_lex_
 
+#endif//__protobuf_lex_
 

@@ -49,6 +49,8 @@ static void             mo_cache_del(void* obj)
 
 static struct cache_t* mo_cache_new(struct stream_t* stream, int init_buf_size)
 {
+    ///!    + MO_TOKEN_LIMIT 是为了给提前扫描的符号预留预读字符数,避免访问无效内存
+    ///!    + 1              是为了当遇到最后一行时,需要额外给缓冲区补一个\n符号
     int real_size = init_buf_size + MO_TOKEN_LIMIT + 1;
     char* buf = (char*)malloc(sizeof(char) * (real_size));
     if (NULL == buf)
@@ -227,13 +229,25 @@ MO_EXTERN int mo_cache_load(struct cache_t*    cache)
 
     ///!    开始从文件读取数据
     int ret = (*(stream->read))(stream, &(cache->pe), cache->buf_limit);
-    if (MO_READ_OK != ret)
+    if (MO_READ_OK == ret)
     {
-        return ret;
+        *(cache->pe) = '\n';
+        return MO_READ_OK;
     }
 
-    *(cache->pe) = '\n';
-    return MO_READ_OK;
+    if (MO_READ_EOF == ret)
+    {
+        ///!    当输入文件最后一行不是空行时,需要为文件额外补充一个换行符号
+        if ((cache->pe > cache->buf) && (cache->pe[-1] != '\n'))
+        {
+            cache->pe[0] = '\n';
+            cache->pe[1] = '\n';
+            cache->pe++;
+        }
+        return MO_READ_EOF;
+    }
+
+    return MO_READ_ERROR;
 }
 
 

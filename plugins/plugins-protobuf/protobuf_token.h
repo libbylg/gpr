@@ -13,8 +13,6 @@ struct protobuf_token_t
 
 
 
-
-
 ///!    所有的符号定义，如果是单字符符号，那么直接用字符本身的字面量代替
 //  下面都是单符号分隔符
 //                                      //  {
@@ -51,22 +49,21 @@ struct protobuf_token_t
 #define MO_TOKEN_INTEGER        401     //  12345
 #define MO_TOKEN_NAME           402     //  一个名字
 #define MO_TOKEN_COMMENT        403     //  一个注释
-
-    //      double
-    //      float
-    //      int32
-    //      int64
-    //      uint32
-    //      uint64
-    //      sint32
-    //      sint64
-    //      fixed32
-    //      fixed32
-    //      sfixed32
-    //      sfixed64
-    //      bool
-    //      string
-    //      bytes
+//      double
+//      float
+//      int32
+//      int64
+//      uint32
+//      uint64
+//      sint32
+//      sint64
+//      fixed32
+//      fixed32
+//      sfixed32
+//      sfixed64
+//      bool
+//      string
+//      bytes
 
 
 
@@ -79,10 +76,12 @@ enum
     CM_SPACE        =   0x0008,
     CM_ALPHA        =   0x0010,
     //CM_ALPHAx       =   0x0020,
-    CM_STRING_FLAG  =   0x0040,
+        CM_STRING_FLAG  =   0x0040,
     CM_COMMENT_FLAG =   0x0080,
 };
 MO_EXTERN unsigned short cm[256];
+
+
 
 #endif//__protobuf_token_
 

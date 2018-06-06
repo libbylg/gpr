@@ -207,7 +207,7 @@ RETRY:
             return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_message);
         }
 
-            return protobuf_try_name(x->cache_top, t, 1);
+        return protobuf_try_name(x->cache_top, t, 1);
     case 'o':   //  oneof   optional    option
         if ( ('n' == pc[1])  
         &&   ('e' == pc[2])  
@@ -240,7 +240,7 @@ RETRY:
             return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_option);
         }
 
-            return protobuf_try_name(x->cache_top, t, 1);
+        return protobuf_try_name(x->cache_top, t, 1);
     case 'p':   //  package
         if ( ('a' == pc[1])  
         &&   ('c' == pc[2])  
@@ -253,7 +253,7 @@ RETRY:
             return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_package);
         }
 
-            return protobuf_try_name(x->cache_top, t, 1);
+        return protobuf_try_name(x->cache_top, t, 1);
     case 'r':   //  repeated    required    reserved    returns rpc
         if ( ('e' == pc[1])  
         &&   ('p' == pc[2])  
@@ -309,7 +309,7 @@ RETRY:
             return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_rpc);
         }
 
-            return protobuf_try_name(x->cache_top, t, 1);
+        return protobuf_try_name(x->cache_top, t, 1);
     case 's':   //  service
         if ( ('e' == pc[1])  
         &&   ('r' == pc[2])  
@@ -321,7 +321,8 @@ RETRY:
         {
             return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_service);
         }
-            return protobuf_try_name(x->cache_top, t, 1);
+        
+        return protobuf_try_name(x->cache_top, t, 1);
     case 'a':  case 'b':  case 'c':  case 'd':/*case 'e':*/
     case 'f':  case 'g':  case 'h':  case 'j':/*case 'i':*/
     case 'k':  case 'l':/*case 'm':*/case 'n':/*case 'o':*/
@@ -373,7 +374,7 @@ RETRY:
 static mo_token  protobuf_try_name      (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
 RETRY:
-    register char* pc = cache->pc + prefix_len;
+    char* pc = cache->pc + prefix_len;
     while (cm[*pc] & (CM_ALPHA | CM_DEC))
     {
         pc++;
@@ -383,7 +384,7 @@ RETRY:
     if (*pc == '\n')
     {
         //  遇到的并不是真的换行符号,那么可能是缓冲区不够,此时可以加载一次缓冲区数据
-        if (pc == cache->pe)
+        if (pc >= cache->pe)
         {
             prefix_len = pc - cache->pc;
             int ret = mo_cache_load(cache);
@@ -414,8 +415,9 @@ RETRY:
 
 static mo_token  protobuf_try_string    (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
-    RETRY:
-    char* pc = cache->pc + prefix_len;
+RETRY:
+
+    register char* pc = cache->pc + prefix_len;
     while (0 == cm[*pc] & CM_STRING_FLAG)
     {
         pc++;
@@ -434,7 +436,8 @@ static mo_token  protobuf_try_string    (struct cache_t* cache, struct token_t* 
     if (*pc == '\\')
     {
         pc++;
-        switch ( * pc )
+
+        switch (*pc)
         {
         case '\\':
         case '\"':
@@ -447,37 +450,37 @@ static mo_token  protobuf_try_string    (struct cache_t* cache, struct token_t* 
         case 'x':
         case 'u':
         case '\n':
-            if (pc != cache->pe)    ///<    如果遇到真换行
+            if (pc >= cache->pe)
             {
-                //  字符串不允许跨行
-                mo_push_result(cache->mo, mo_result_new("lex", 111, "string should be closed brfore new line"));
+                prefix_len = ((pc - cache->pc) - 1);    ///<    由于碰到转义字符,所以实际识别出来的数据长度应该少一个字符
+                int ret = mo_cache_load(cache);
+                if (MO_READ_OK == ret)
+                {
+                    goto RETRY; //  TODO bug
+                }
+
+                if (MO_READ_ERROR == ret)
+                {
+                    //  转义字符数据识别失败
+                    mo_push_result(cache->mo, mo_result_new("lex", 111, "load cache failed"));
+                    return MO_TOKEN_ERROR;
+                }
+
+                if (MO_READ_EOF == ret)
+                {
+                    //  字符串没有正确地结束
+                    mo_push_result(cache->mo, mo_result_new("lex", 111, "string do not end correctly"));
+                    return MO_TOKEN_ERROR;
+                }
+
+                //  不支持的返回码
+                mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
                 return MO_TOKEN_ERROR;
             }
 
-            prefix_len = ((pc - cache->pc) - 1);    ///<    由于碰到转义字符,所以实际识别出来的数据长度应该少一个字符
-            int ret = mo_cache_load(cache);
-            if (MO_READ_OK == ret)
-            {
-                pc++;
-                goto RETRY; //  TODO bug
-            }
 
-            if (MO_READ_ERROR == ret)
-            {
-                //  转义字符数据识别失败
-                mo_push_result(cache->mo, mo_result_new("lex", 111, "load cache failed"));
-                return MO_TOKEN_ERROR;
-            }
-
-            if (MO_READ_EOF == ret)
-            {
-                //  字符串没有正确地结束
-                mo_push_result(cache->mo, mo_result_new("lex", 111, "string do not end correctly"));
-                return MO_TOKEN_ERROR;
-            }
-
-            //  不支持的返回码
-            mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
+            //  如果遇到真换行:字符串不允许跨行
+            mo_push_result(cache->mo, mo_result_new("lex", 111, "string should be closed brfore new line"));
             return MO_TOKEN_ERROR;
         default:
             //  不支持的转义字符
@@ -489,7 +492,7 @@ static mo_token  protobuf_try_string    (struct cache_t* cache, struct token_t* 
     if (*pc == '\n')
     {
         //  遇到的并不是真的换行符号
-        if (pc == cache->pe)
+        if (pc >= cache->pe)
         {
             int ret = mo_cache_load(cache);
             if (MO_READ_OK == ret)
@@ -530,8 +533,8 @@ static mo_token  protobuf_try_string    (struct cache_t* cache, struct token_t* 
 
 static mo_token  protobuf_try_comment_range   (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
-    RETRY:
-    char* pc = cache->pc + prefix_len;
+RETRY:
+    register char* pc = cache->pc + prefix_len;
     while (0 != (cm[*pc] & CM_COMMENT_FLAG))
     {
         pc++;
@@ -556,39 +559,39 @@ static mo_token  protobuf_try_comment_range   (struct cache_t* cache, struct tok
 
     if ('\n' == *pc)
     {
-        if (pc != cache->pe)
+        if (pc >= cache->pe)
         {
-            //  遇到真的换行
-            pc++;
-            cache->lino++;
-            cache->line = pc;
-            cache->pc   = pc;
-            goto RETRY;
-        }
+            int ret = mo_cache_load(cache);
+            if (MO_READ_OK == ret)
+            {
+                goto RETRY;
+            }
 
-        int ret = mo_cache_load(cache);
-        if (MO_READ_OK == ret)
-        {
-            goto RETRY;
-        }
+            if (MO_READ_EOF == ret)
+            {
+                //  注释不允许跨文件
+                mo_push_result(cache->mo, mo_result_new("lex", 111, "comment not end correctly"));
+                return MO_TOKEN_ERROR;
+            }
 
-        if (MO_READ_EOF == ret)
-        {
-            //  注释不允许跨文件
-            mo_push_result(cache->mo, mo_result_new("lex", 111, "comment not end correctly"));
-            return MO_TOKEN_ERROR;
-        }
+            if (MO_READ_ERROR == ret)
+            {
+                //  注释识别失败
+                mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
+                return MO_TOKEN_ERROR;
+            }
 
-        if (MO_READ_ERROR == ret)
-        {
-            //  注释识别失败
+            //  不支持的返回码
             mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
             return MO_TOKEN_ERROR;
         }
 
-        //  不支持的返回码
-        mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
-        return MO_TOKEN_ERROR;
+        //  遇到真的换行
+        pc++;
+        cache->lino++;
+        cache->line = pc;
+        cache->pc   = pc;
+        goto RETRY;
     }
 
     //  程序不应该走到这里
@@ -601,8 +604,9 @@ static mo_token  protobuf_try_comment_range   (struct cache_t* cache, struct tok
 
 static mo_token  protobuf_try_comment_line   (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
-    RETRY:
-    char* pc = cache->pc + prefix_len;
+RETRY:
+
+    register char* pc = cache->pc + prefix_len;
     while (*pc != '\n')
     {
         pc++;
@@ -610,7 +614,33 @@ static mo_token  protobuf_try_comment_line   (struct cache_t* cache, struct toke
 
     if ('\n' == *pc)
     {
-        if (pc != cache->pe)    //  遇到真的换行
+        if (pc >= cache->pe)    //  遇到真的换行
+        {
+            int ret = mo_cache_load(cache);
+            if (MO_READ_OK == ret)
+            {
+                goto RETRY;
+            }
+
+            if (MO_READ_EOF == ret)
+            {
+                //  注释识别失败
+                mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
+                return MO_TOKEN_ERROR;
+            }
+
+            if (MO_READ_ERROR == ret)
+            {
+                //  注释识别失败
+                mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
+                return MO_TOKEN_ERROR;
+            }
+
+            //  不支持的返回码
+            mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
+            return MO_TOKEN_ERROR;
+        }
+        else
         {
             t->token = MO_TOKEN_COMMENT;
             t->text[0] = cache->pc;
@@ -623,34 +653,7 @@ static mo_token  protobuf_try_comment_line   (struct cache_t* cache, struct toke
 
             return MO_TOKEN_COMMENT;
         }
-
-        int ret = mo_cache_load(cache);
-        if (MO_READ_OK == ret)
-        {
-            goto RETRY;
-        }
-
-        if (MO_READ_EOF == ret)
-        {
-            t->token = MO_TOKEN_COMMENT;
-            t->text[0] = cache->pc;
-            t->text[1] = pc - 1;
-            cache->pc  = pc;
-            return MO_TOKEN_COMMENT;
-        }
-
-        if (MO_READ_ERROR == ret)
-        {
-            //  注释识别失败
-            mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
-            return MO_TOKEN_ERROR;
-        }
-
-        //  不支持的返回码
-        mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
-        return MO_TOKEN_ERROR;
     }
-
 
 
     //  程序不应该走到这里

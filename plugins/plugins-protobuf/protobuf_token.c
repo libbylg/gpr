@@ -1,7 +1,7 @@
 #include "protobuf_token.h"
 
 
-MO_EXTERN short cm[256] = 
+short cm[256] =
 {
 /*  0x00    ???    0    */  0,
 /*  0x01    ???    1    */  0,
