@@ -5,6 +5,8 @@
 #include <stdlib.h>
 
 
+
+
 #define     MO_EXTR_LEN     (32)
 
 
@@ -124,7 +126,7 @@ RETRY:
     switch (*pc)
     {
     case '{':  case '}':  case  '(':  case ')':  case  ';':
-    case ',':  case '=':  case  '<':  case '>':  
+    case ',':  case '=':  case  '<':  case '>':  case  '.':
         return protobuf_lex_setup_token(x, t, 1, *pc);   
     case 'e':   //  enum    exit    extensions  extend
         if ( ('n' == pc[1])  

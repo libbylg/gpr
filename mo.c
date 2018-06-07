@@ -85,12 +85,17 @@ static struct cache_t* mo_cache_new(struct stream_t* stream, int init_buf_size)
     return cache;
 }
 
+
+
+
 MO_EXTERN   struct mo_t*        mo_new          ()
 {
     struct mo_t* mo = (struct mo_t*)malloc(sizeof(struct mo_t));
     mo->lex     =   NULL;
     mo->sytx    =   (struct sytx_t*)malloc(sizeof(struct sytx_t));
-    mo->result  =   NULL;
+    memset(mo->sytx, 0, sizeof(struct sytx_t));
+    mo->result  =   (struct result_t*)malloc(sizeof(struct result_t));
+    memset(mo->result, 0, sizeof(struct result_t));
     return mo;
 }
 
@@ -108,14 +113,6 @@ MO_EXTERN   void                mo_del          (struct mo_t* mo)
 MO_EXTERN   void                mo_reg_lex      (struct mo_t* mo, struct lex_t*    x)
 {
     mo->lex = x;
-}
-
-
-
-
-MO_EXTERN   void                mo_reg_result   (struct mo_t* mo, struct result_t* r)
-{
-    mo->result = r;
 }
 
 

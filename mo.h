@@ -161,7 +161,6 @@ MO_EXTERN   struct mo_t*        mo_new          ();
 MO_EXTERN   void                mo_del          (struct mo_t* mo);
 MO_EXTERN   struct params_t*    mo_get_params   (struct mo_t* mo);
 MO_EXTERN   void                mo_reg_lex      (struct mo_t* mo, struct lex_t*    x);
-MO_EXTERN   void                mo_reg_result   (struct mo_t* mo, struct result_t* r);
 MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m);
 MO_EXTERN   void                mo_push_unit    (struct mo_t* mo, struct unit_t*   u);
 MO_EXTERN   struct unit_t*      mo_pop_unit     (struct mo_t* mo);
