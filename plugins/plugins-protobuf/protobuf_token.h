@@ -44,6 +44,7 @@ struct protobuf_token_t
 #define MO_TOKEN_option         316     //  option
 #define MO_TOKEN_returns        317     //  returns
 #define MO_TOKEN_syntax         318     //  syntax
+#define MO_TOKEN_to             319     //  to
 #define MO_TOKEN_RESERVED_MAX   399     //  -------
 //  下面都是字面量或者用户定义的名字
 #define MO_TOKEN_STRING         400     //  "xxxx"

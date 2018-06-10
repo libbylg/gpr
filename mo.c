@@ -163,7 +163,7 @@ MO_EXTERN   struct unit_t*      mo_top_unit     (struct mo_t* mo)
 
 MO_EXTERN   mo_errno            mo_walk(struct mo_t* mo)
 {
-    mo_action action = MO_ACTION_TRYAGAIN;
+    mo_action action = MO_ACTION_RETRY;
     mo_token  token  = MO_TOKEN_ERROR;
     
 READ_MORE:
@@ -186,7 +186,7 @@ TRYAGAIN:
         goto READ_MORE;
     }
 
-    if (MO_ACTION_TRYAGAIN == action)
+    if (MO_ACTION_RETRY == action)
     {
         ///!    所有的数据接收完毕，且刚好识别完毕
         if (MO_TOKEN_EOF == token)

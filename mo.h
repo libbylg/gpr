@@ -34,7 +34,7 @@ typedef int             mo_action;
 ///!    语法分析后返回的对当前 token 的处理建议
 #define     MO_ACTION_ERROR     (0)     ///<    遇到错误
 #define     MO_ACTION_NEEDMORE  (1)     ///<    读取更多符号
-#define     MO_ACTION_TRYAGAIN  (2)     ///<    重试
+#define     MO_ACTION_RETRY     (2)     ///<    重试
 #define     MO_ACTION_COMPLETE  (3)     ///<    识别完成
 
 

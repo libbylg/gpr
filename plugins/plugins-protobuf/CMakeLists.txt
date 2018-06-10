@@ -4,9 +4,11 @@ PROJECT(plugins-protobuf)
 
 
 #   All headers
-SET(HRDS    protobuf.h   
-            protobuf_lex.h
-            protobuf_token.h
+SET(HRDS
+    protobuf.h
+    protobuf_lex.h
+    protobuf_token.h
+    protobuf_compiler.h
     )
 SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 
@@ -17,6 +19,16 @@ SET(SRCS    protobuf_units.c
             protobuf_lex.c
             protobuf_demo.c
             protobuf_token.c
+            protobuf_unit_app.c
+            protobuf_unit_enum.c
+            protobuf_unit_enum_item_list.c
+            protobuf_unit_message_field_list.c
+            protobuf_unit_service_field_list.c
+            protobuf_unit_import.c
+            protobuf_unit_message.c
+            protobuf_unit_package.c
+            protobuf_unit_service.c
+            protobuf_unit_syntax.c
             ${HRDS}
 )
 

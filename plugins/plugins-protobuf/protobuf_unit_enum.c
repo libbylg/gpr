@@ -1,5 +1,5 @@
 #include "mo.h"
-#include "stdlib.h"
+#include <stdlib.h>
 #include "plugins/plugins-protobuf/protobuf_token.h"
 
 struct protobuf_unit_enum_t
@@ -16,14 +16,14 @@ static mo_action protobuf_unit_enum_accept(struct unit_t*   n, struct token_t* t
     switch (u->state)
     {
     case 0: //  初始状态
-        if (MO_TOKEN_enum != t->token)
+        if (MO_TOKEN_enum == t->token)
         {
             u->state = 1;
             return MO_ACTION_NEEDMORE;
         }
         return MO_ACTION_NEEDMORE;
     case 1: //  等 NAME
-        if (MO_TOKEN_NAME != t->token)
+        if (MO_TOKEN_NAME == t->token)
         {
             u->state = 2;
             return MO_ACTION_NEEDMORE;
@@ -33,7 +33,7 @@ static mo_action protobuf_unit_enum_accept(struct unit_t*   n, struct token_t* t
         if ('{' == t->token)
         {
             u->state = 3;
-            mo_push_unit(u->super.mo, protobuf_unit_enum_field_list_new());
+            mo_push_unit(u->super.mo, protobuf_unit_enum_item_list_new());
             return MO_ACTION_NEEDMORE;
         }
         break;

@@ -1,5 +1,5 @@
 #include "mo.h"
-#include "stdlib.h"
+#include <stdlib.h>
 #include "plugins/plugins-protobuf/protobuf_token.h"
 
 struct protobuf_unit_syntax_t
@@ -22,26 +22,26 @@ static mo_action protobuf_unit_syntax_accept(struct unit_t*   n, struct token_t*
     switch (u->state)
     {
     case 0: //  初始状态
-        if (MO_TOKEN_syntax != t->token)
+        if (MO_TOKEN_syntax == t->token)
         {
             u->state = 1;
             return MO_ACTION_NEEDMORE;
         }
-        return MO_ACTION_NEEDMORE;
+    break;
     case 1: //  等 = 
-        if ('=' != t->token)
+        if ('=' == t->token)
         {
             u->state = 2;
             return MO_ACTION_NEEDMORE;
         }
-        break;
+    break;
     case 2: //  等 "xxx"
         if (MO_TOKEN_STRING == t->token)
         {
             mo_pop_unit(u->super.mo);
             return MO_ACTION_NEEDMORE;
         }
-        break;
+    break;
     }
 
     mo_push_result(u->super.mo, mo_result_new("parser", 111, "'syntax' 之后需要 '='"));

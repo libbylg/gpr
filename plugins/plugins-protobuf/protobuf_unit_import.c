@@ -1,5 +1,5 @@
 #include "mo.h"
-#include "stdlib.h"
+#include <stdlib.h>
 #include "plugins/plugins-protobuf/protobuf_token.h"
 
 struct protobuf_unit_import_t
@@ -15,14 +15,14 @@ static mo_action protobuf_unit_import_accept(struct unit_t*   n, struct token_t*
     switch (u->state)
     {
     case 0: //  初始状态
-        if (MO_TOKEN_import != t->token)
+        if (MO_TOKEN_import == t->token)
         {
             u->state = 1;
             return MO_ACTION_NEEDMORE;
         }
         break;
     case 1: //  等 "xxxx"
-        if (MO_TOKEN_STRING != t->token)
+        if (MO_TOKEN_STRING == t->token)
         {
             mo_pop_unit(u->super.mo);
             return MO_ACTION_NEEDMORE;
