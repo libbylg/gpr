@@ -1,5 +1,5 @@
 #include "protobuf.h"
-#include "plugins/plugins-protobuf/protobuf_token.h"
+#include "protobuf_token.h"
 
 #include <stdlib.h>
 
@@ -25,7 +25,7 @@ static mo_action protobuf_unit_enum_item_list_accept(struct unit_t*   n, struct 
         switch (t->token)
         {
         case MO_TOKEN_option:
-            mo_push_unit(u->super.mo, protobuf_option_new());
+            mo_push_unit(u->super.mo, protobuf_unit_option_new());
             u->state = 2;
             return MO_ACTION_RETRY;
         case MO_TOKEN_NAME:

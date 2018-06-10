@@ -9,7 +9,8 @@ struct protobuf_lex_t
 {
     struct lex_t    super;
 };
-MO_EXTERN   struct protobuf_lex_t* protobuf_lex_new(int init_cache_size);
+
+MO_EXTERN   struct lex_t* protobuf_lex_new(int init_cache_size);
 
 
 

@@ -1,6 +1,9 @@
 #include "mo.h"
 
-#include "plugins/plugins-protobuf/protobuf_token.h"
+#include "protobuf.h"
+#include "protobuf_token.h"
+
+#include <stdlib.h>
 
 struct protobuf_unit_sevice_method_t
 {
@@ -67,7 +70,7 @@ static mo_action protobuf_unit_sevice_method_accept(struct unit_t*   n, struct t
 }
 
 
-MO_EXTERN struct unit_t* protobuf_unit_sevice_method_new()
+MO_EXTERN struct unit_t* protobuf_unit_service_method_new()
 {
     struct protobuf_unit_sevice_method_t* unit = (struct protobuf_unit_sevice_method_t*)malloc(sizeof(struct protobuf_unit_sevice_method_t));
     unit->super.size    =   sizeof(struct protobuf_unit_sevice_method_t);

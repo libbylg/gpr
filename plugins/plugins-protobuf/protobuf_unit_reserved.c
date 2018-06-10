@@ -1,6 +1,6 @@
 #include "mo.h"
 #include <stdlib.h>
-#include "plugins/plugins-protobuf/protobuf_token.h"
+#include "protobuf_token.h"
 
 struct protobuf_unit_reserved_t
 {
@@ -34,7 +34,7 @@ static mo_action protobuf_unit_reserved_accept(struct unit_t*   n, struct token_
             mo_push_unit(u->super.mo, protobuf_unit_reserved_id_new());
             u->state = 2;
             return MO_ACTION_RETRY;
-        case ';'
+        case ';':
             mo_pop_unit(u->super.mo);
             return MO_ACTION_NEEDMORE;
         }

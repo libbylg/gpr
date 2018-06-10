@@ -1,7 +1,8 @@
 #include "mo.h"
 
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <string.h>
 
 struct stream_string_t
 {
@@ -38,7 +39,7 @@ static int  stream_string_read(struct stream_t* m, char** pos, char* end)
     }
 
     int copy_len = ((cache_size < remain_size)?cache_size:remain_size);
-    memcpy(*pos, stream->data, copy_len);
+    memcpy(*pos, stream->data, (size_t)copy_len);
 
     *pos += copy_len;
     return MO_READ_OK;

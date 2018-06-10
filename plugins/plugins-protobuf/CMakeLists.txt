@@ -15,23 +15,35 @@ SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 
 
 #   All sources
-SET(SRCS    protobuf_units.c
-            protobuf_lex.c
-            protobuf_demo.c
-            protobuf_token.c
-            protobuf_unit_app.c
-            protobuf_unit_enum.c
-            protobuf_unit_enum_item_list.c
-            protobuf_unit_message_field_list.c
-            protobuf_unit_service_field_list.c
-            protobuf_unit_import.c
-            protobuf_unit_message.c
-            protobuf_unit_package.c
-            protobuf_unit_service.c
-            protobuf_unit_syntax.c
-            ${HRDS}
-)
+SET(SRCS
+    protobuf_compiler.c
+    protobuf_demo.c
+    protobuf_lex.c
+    protobuf_token.c
+    protobuf_unit_app.c
+    protobuf_unit_enum.c
+    protobuf_unit_enum_item.c
+    protobuf_unit_enum_item_list.c
+    protobuf_unit_import.c
+    protobuf_unit_message.c
+    protobuf_unit_message_field.c
+    protobuf_unit_message_field_list.c
+    protobuf_unit_option.c
+    protobuf_unit_package.c
+    protobuf_unit_param_list.c
+    protobuf_unit_ref.c
+    protobuf_unit_reserved.c
+    protobuf_unit_reserved_id.c
+    protobuf_unit_reserved_name.c
+    protobuf_unit_service.c
+    protobuf_unit_service_field_list.c
+    protobuf_unit_service_method.c
+    protobuf_unit_syntax.c
+    ${HRDS}
+    )
 
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c11")
 
 
 #   Change the properties of files for Visual Stdio C++

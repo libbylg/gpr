@@ -173,7 +173,7 @@ MO_EXTERN   void                mo_push_result  (struct mo_t* mo, struct result_
 MO_EXTERN   void                mo_clear_result (struct mo_t* mo);
 
 
-MO_EXTERN   struct stream_t*    mo_stream_file_new  (char* filename);
+MO_EXTERN   struct stream_t*    mo_stream_file_new  (const char* filename);
 MO_EXTERN   struct stream_t*    mo_stream_string_new(char* str, int size, int auto_free);
 
 

@@ -1,7 +1,8 @@
 #include "mo.h"
 
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <string.h>
 
 struct stream_file_t
 {
@@ -51,7 +52,7 @@ static int  mo_stream_file_read(struct stream_t* m, char** pos, char* end)
 }
 
 
-MO_EXTERN   struct stream_t*   mo_stream_file_new(char* filename)
+MO_EXTERN   struct stream_t*   mo_stream_file_new(const char* filename)
 {
     size_t filename_len = strlen(filename);
     char* p = (char*)malloc(filename_len + 1);

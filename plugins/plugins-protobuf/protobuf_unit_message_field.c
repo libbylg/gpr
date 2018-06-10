@@ -1,6 +1,6 @@
 #include "mo.h"
 #include <stdlib.h>
-#include "plugins/plugins-protobuf/protobuf_token.h"
+#include "protobuf_token.h"
 
 struct protobuf_unit_message_field_t
 {

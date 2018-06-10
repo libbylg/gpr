@@ -14,7 +14,8 @@ OPTION(DEBUG "Generate symbols for debug" OFF)
 #   All headers
 SET(HRDS
     mo.h
-    mo_utils.h)
+    mo_utils.h
+    )
 SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 
 
@@ -25,7 +26,8 @@ SET(SRCS
     mo_utils.c
     mo_stream_file.c
     mo_stream_string.c
-    ${HRDS})
+    ${HRDS}
+    )
 SET(INCS .)
 SET(CCDEFS -DMO_EXPORTS)
 

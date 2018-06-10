@@ -22,16 +22,6 @@ static void      protobuf_lex_del(void* obj)
 
 
 
-MO_EXTERN   struct protobuf_lex_t* protobuf_lex_new(int init_cache_size)
-{
-    struct protobuf_lex_t* lex = (struct protobuf_lex_t*)malloc(sizeof(struct protobuf_lex_t));
-
-    lex->super.size       =   sizeof(struct protobuf_lex_t);
-    lex->super.cache_top  =   NULL;
-    lex->super.del        =   protobuf_lex_del;
-    lex->super.next       =   protobuf_lex_next;
-    return lex;
-}
 
 
 
@@ -39,14 +29,19 @@ MO_EXTERN   struct protobuf_lex_t* protobuf_lex_new(int init_cache_size)
 ///!    定位到第一个非注释非空白处
 static int       protobuf_lex_locate(struct lex_t*  x)
 {
-RETRY:
-    register struct cache_t*    cache   = x->cache_top;
-    register struct stream_t*   stream  = x->cache_top->stream;
-    register char*              pc      = x->cache_top->pc;
-    register char*              pe      = x->cache_top->pe;
+    register struct cache_t*    cache   ;
+    register struct stream_t*   stream  ;
+    register char*              pc      ;
+    register char*              pe      ;
 
+RETRY:
+    cache   = x->cache_top;
+    stream  = x->cache_top->stream;
+    pc      = x->cache_top->pc;
+    pe      = x->cache_top->pe;
+    
     ///!    跳过所有的空白
-    while (cm[*pc] & CM_SPACE)
+    while (cm[(int)*pc] & CM_SPACE)
     {
         pc++;
     }
@@ -68,10 +63,10 @@ RETRY:
 
     ///!    如果是缓冲区的数据读取完了
     cache->pc = pc;
-    int ret = mo_cache_load(x);
+    int ret = mo_cache_load(cache);
     switch  (ret)
     {
-    case MO_READ_OK:    
+    case MO_READ_OK:
         goto RETRY;
     case MO_READ_EOF:
         x->cache_top = x->cache_top->prev;      ///<    退栈
@@ -97,287 +92,13 @@ static mo_token  protobuf_lex_setup_token(struct lex_t*    x, struct token_t* t,
 
 
 
-static mo_token  protobuf_lex_next(struct lex_t*    x, struct token_t* t)
-{
-RETRY:
-    ///!    已经没有任何数据可以读取了
-    if (NULL == x->cache_top)
-    {
-        return MO_TOKEN_EOF;
-    }
-
-    int ret = protobuf_lex_locate(x->cache_top);
-    if (MO_READ_OK != ret)
-    {
-        if (MO_READ_ERROR == ret)
-        {
-            mo_push_result(x->mo, mo_result_new("lex", 111, "locate failed"));
-            return MO_TOKEN_ERROR;
-        }
-
-        if (MO_READ_EOF == ret)
-        {
-            return MO_TOKEN_EOF;
-        }
-    }
-
-
-    register char* pc = x->cache_top->pc;
-    switch (*pc)
-    {
-    case '{':  case '}':  case  '(':  case ')':  case  ';':
-    case ',':  case '=':  case  '<':  case '>':  case  '.':
-        return protobuf_lex_setup_token(x, t, 1, *pc);   
-    case 'e':   //  enum    exit    extensions  extend
-        if ( ('n' == pc[1])  
-        &&   ('u' == pc[2])  
-        &&   ('m' == pc[3]) 
-        &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 4, MO_TOKEN_enum);
-        }
-
-        if ( ('x' == pc[1])  
-        &&   ('i' == pc[2])  
-        &&   ('t' == pc[3]) 
-        &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 4,  MO_TOKEN_exit);
-        }
-
-        if ( ('x' == pc[1])  
-        &&   ('t' == pc[2])  
-        &&   ('e' == pc[3]) 
-        &&   ('n' == pc[4]) 
-        &&   ('d' == pc[5]) 
-        &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_extend);
-        }
-
-        if ( ('x' == pc[1])  
-        &&   ('t' == pc[2])  
-        &&   ('e' == pc[3]) 
-        &&   ('n' == pc[4]) 
-        &&   ('s' == pc[5]) 
-        &&   ('i' == pc[6]) 
-        &&   ('o' == pc[7]) 
-        &&   ('n' == pc[8]) 
-        &&   ('s' == pc[9]) 
-        &&   (0 == (cm[pc[10]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 10,  MO_TOKEN_extensions);
-        }
-
-        return protobuf_try_name(x->cache_top, t, 1);
-    case 'i':   //  init        import
-        if ( ('n' == pc[1])  
-        &&   ('i' == pc[2])  
-        &&   ('t' == pc[3]) 
-        &&   (0 == (cm[pc[4]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 4,  MO_TOKEN_init);
-        }
-
-        if ( ('m' == pc[1])  
-        &&   ('p' == pc[2])  
-        &&   ('o' == pc[3]) 
-        &&   ('r' == pc[4]) 
-        &&   ('t' == pc[5]) 
-        &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_import);
-        }
-
-        return protobuf_try_name(x->cache_top, t, 1);
-    case 'm':   //  map     message
-        if ( ('a' == pc[1])  
-        &&   ('p' == pc[2])  
-        &&   (0 == (cm[pc[3]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_map);
-        }
-
-        if ( ('e' == pc[1])  
-        &&   ('s' == pc[2])  
-        &&   ('s' == pc[3]) 
-        &&   ('a' == pc[4]) 
-        &&   ('g' == pc[5]) 
-        &&   ('e' == pc[6]) 
-        &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_message);
-        }
-
-        return protobuf_try_name(x->cache_top, t, 1);
-    case 'o':   //  oneof   optional    option
-        if ( ('n' == pc[1])  
-        &&   ('e' == pc[2])  
-        &&   ('o' == pc[3])  
-        &&   ('f' == pc[4])  
-        &&   (0 == (cm[pc[5]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 5,  MO_TOKEN_oneof);
-        }
-
-        if ( ('p' == pc[1])  
-        &&   ('t' == pc[2])  
-        &&   ('i' == pc[3]) 
-        &&   ('o' == pc[4]) 
-        &&   ('n' == pc[5]) 
-        &&   ('a' == pc[6]) 
-        &&   ('l' == pc[7]) 
-        &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_optional);
-        }
-
-        if ( ('p' == pc[1])  
-        &&   ('t' == pc[2])  
-        &&   ('i' == pc[3]) 
-        &&   ('o' == pc[4]) 
-        &&   ('n' == pc[5]) 
-        &&   (0 == (cm[pc[6]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_option);
-        }
-
-        return protobuf_try_name(x->cache_top, t, 1);
-    case 'p':   //  package
-        if ( ('a' == pc[1])  
-        &&   ('c' == pc[2])  
-        &&   ('k' == pc[3]) 
-        &&   ('a' == pc[4]) 
-        &&   ('g' == pc[5]) 
-        &&   ('e' == pc[6]) 
-        &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_package);
-        }
-
-        return protobuf_try_name(x->cache_top, t, 1);
-    case 'r':   //  repeated    required    reserved    returns rpc
-        if ( ('e' == pc[1])  
-        &&   ('p' == pc[2])  
-        &&   ('e' == pc[3]) 
-        &&   ('a' == pc[4]) 
-        &&   ('t' == pc[5]) 
-        &&   ('e' == pc[6]) 
-        &&   ('d' == pc[7]) 
-        &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_repeated);
-        }
-
-        if ( ('e' == pc[1])  
-        &&   ('q' == pc[2])  
-        &&   ('u' == pc[3]) 
-        &&   ('i' == pc[4]) 
-        &&   ('r' == pc[5]) 
-        &&   ('e' == pc[6]) 
-        &&   ('d' == pc[7]) 
-        &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_required);
-        }
-
-        if ( ('e' == pc[1])  
-        &&   ('s' == pc[2])  
-        &&   ('e' == pc[3]) 
-        &&   ('r' == pc[4]) 
-        &&   ('v' == pc[5]) 
-        &&   ('e' == pc[6]) 
-        &&   ('d' == pc[7]) 
-        &&   (0 == (cm[pc[8]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_reserved);
-        }
-
-        if ( ('e' == pc[1])  
-        &&   ('t' == pc[2])  
-        &&   ('u' == pc[3]) 
-        &&   ('r' == pc[4]) 
-        &&   ('n' == pc[5]) 
-        &&   ('s' == pc[6]) 
-        &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_returns);
-        }
-
-        if ( ('p' == pc[1])  
-        &&   ('c' == pc[2])  
-        &&   (0 == (cm[pc[3]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_rpc);
-        }
-
-        return protobuf_try_name(x->cache_top, t, 1);
-    case 's':   //  service
-        if ( ('e' == pc[1])  
-        &&   ('r' == pc[2])  
-        &&   ('v' == pc[3])
-        &&   ('i' == pc[4])  
-        &&   ('c' == pc[5])
-        &&   ('e' == pc[6])  
-        &&   (0 == (cm[pc[7]]&(CM_ALPHA|CM_DEC))) )
-        {
-            return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_service);
-        }
-        
-        return protobuf_try_name(x->cache_top, t, 1);
-    case 'a':  case 'b':  case 'c':  case 'd':/*case 'e':*/
-    case 'f':  case 'g':  case 'h':  case 'j':/*case 'i':*/
-    case 'k':  case 'l':/*case 'm':*/case 'n':/*case 'o':*/
-  /*case 'p':*/case 'q':/*case 'r':  case 's':*/case 't':  
-    case 'u':  case 'v':  case 'w':  case 'x':  case 'y':  
-    case 'z':
-    case 'A':  case 'B':  case 'C':  case 'D':  case 'E':  
-    case 'F':  case 'G':  case 'H':  case 'J':  case 'I':  
-    case 'K':  case 'L':  case 'M':  case 'N':  case 'O':  
-    case 'P':  case 'Q':  case 'R':  case 'S':  case 'T':  
-    case 'U':  case 'V':  case 'W':  case 'X':  case 'Y':  
-    case 'Z':
-    case '_':
-        return protobuf_try_name(x, t, 1);
-    case '0':  case '1':  case '2':  case '3':  case '4':  
-    case '5':  case '6':  case '7':  case '8':  case '9':
-        return protobuf_try_number(x, t, 1);
-    case '"':
-        return protobuf_try_string(x, t, 1);
-    case '/':
-        if ('*' == pc[1])  
-        {
-            if (0 != protobuf_try_comment_range(x, t, 2))
-            {
-                mo_push_result(x->mo, mo_result_new("lex", 111, "invalid range comment"));
-                return MO_TOKEN_ERROR;
-            }
-
-            goto RETRY;
-        }
-
-        if ('/' == pc[1])
-        {
-            protobuf_try_comment_line(x, t, 2);
-            goto RETRY; 
-        }
-        
-        //mo_push_result(mo_result_new("lex", 111, "invalid char for lex '0x%.2D'", (unsigned int)(*pc)));
-        //return MO_TOKEN_ERROR;
-    default:
-        mo_push_result(x->mo, mo_result_new("lex", 111, "invalid char for lex '0x%.2D'", (unsigned int)(*pc)));
-        return MO_TOKEN_ERROR;
-    }
-}
-
-
-
-
 static mo_token  protobuf_try_name      (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
+    register char* pc;
+
 RETRY:
-    char* pc = cache->pc + prefix_len;
-    while (cm[*pc] & (CM_ALPHA | CM_DEC))
+    pc = cache->pc + prefix_len;
+    while (cm[(int)*pc] & (CM_ALPHA | CM_DEC))
     {
         pc++;
     }
@@ -417,10 +138,11 @@ RETRY:
 
 static mo_token  protobuf_try_string    (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
+    register char* pc;
+    
 RETRY:
-
-    register char* pc = cache->pc + prefix_len;
-    while (0 == cm[*pc] & CM_STRING_FLAG)
+    pc = cache->pc + prefix_len;
+    while (0 == (cm[(int)*pc] & CM_STRING_FLAG))
     {
         pc++;
     }
@@ -535,9 +257,11 @@ RETRY:
 
 static mo_token  protobuf_try_comment_range   (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
+    register char* pc;
+    
 RETRY:
-    register char* pc = cache->pc + prefix_len;
-    while (0 != (cm[*pc] & CM_COMMENT_FLAG))
+    pc = cache->pc + prefix_len;
+    while (0 != (cm[(int)*pc] & CM_COMMENT_FLAG))
     {
         pc++;
     }
@@ -606,9 +330,10 @@ RETRY:
 
 static mo_token  protobuf_try_comment_line   (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
+    register char* pc;
+    
 RETRY:
-
-    register char* pc = cache->pc + prefix_len;
+    pc = cache->pc + prefix_len;
     while (*pc != '\n')
     {
         pc++;
@@ -668,8 +393,295 @@ RETRY:
 
 static mo_token  protobuf_try_number    (struct cache_t* cache, struct token_t* t, int prefix_len)
 {
-
+    return 0;
 }
 
 
+
+
+static mo_token  protobuf_lex_next(struct lex_t*    x, struct token_t* t)
+{
+RETRY:
+    ///!    已经没有任何数据可以读取了
+    if (NULL == x->cache_top)
+    {
+        return MO_TOKEN_EOF;
+    }
+    
+    int ret = protobuf_lex_locate(x);
+    if (MO_READ_OK != ret)
+    {
+        if (MO_READ_ERROR == ret)
+        {
+            mo_push_result(x->mo, mo_result_new("lex", 111, "locate failed"));
+            return MO_TOKEN_ERROR;
+        }
+        
+        if (MO_READ_EOF == ret)
+        {
+            return MO_TOKEN_EOF;
+        }
+    }
+    
+    
+    register char* pc = x->cache_top->pc;
+    switch (*pc)
+    {
+        case '{':  case '}':  case  '(':  case ')':  case  ';':
+        case ',':  case '=':  case  '<':  case '>':  case  '.':
+            return protobuf_lex_setup_token(x, t, 1, *pc);
+        case 'e':   //  enum    exit    extensions  extend
+            if ( ('n' == pc[1])
+                &&   ('u' == pc[2])
+                &&   ('m' == pc[3])
+                &&   (0 == (cm[(int)pc[4]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 4, MO_TOKEN_enum);
+            }
+            
+            if ( ('x' == pc[1])
+                &&   ('i' == pc[2])
+                &&   ('t' == pc[3])
+                &&   (0 == (cm[(int)pc[4]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 4,  MO_TOKEN_exit);
+            }
+            
+            if ( ('x' == pc[1])
+                &&   ('t' == pc[2])
+                &&   ('e' == pc[3])
+                &&   ('n' == pc[4])
+                &&   ('d' == pc[5])
+                &&   (0 == (cm[(int)pc[6]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_extend);
+            }
+            
+            if ( ('x' == pc[1])
+                &&   ('t' == pc[2])
+                &&   ('e' == pc[3])
+                &&   ('n' == pc[4])
+                &&   ('s' == pc[5])
+                &&   ('i' == pc[6])
+                &&   ('o' == pc[7])
+                &&   ('n' == pc[8])
+                &&   ('s' == pc[9])
+                &&   (0 == (cm[(int)pc[10]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 10,  MO_TOKEN_extensions);
+            }
+            
+            return protobuf_try_name(x->cache_top, t, 1);
+        case 'i':   //  init        import
+            if ( ('n' == pc[1])
+                &&   ('i' == pc[2])
+                &&   ('t' == pc[3])
+                &&   (0 == (cm[(int)pc[4]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 4,  MO_TOKEN_init);
+            }
+            
+            if ( ('m' == pc[1])
+                &&   ('p' == pc[2])
+                &&   ('o' == pc[3])
+                &&   ('r' == pc[4])
+                &&   ('t' == pc[5])
+                &&   (0 == (cm[(int)pc[6]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_import);
+            }
+            
+            return protobuf_try_name(x->cache_top, t, 1);
+        case 'm':   //  map     message
+            if ( ('a' == pc[1])
+                &&   ('p' == pc[2])
+                &&   (0 == (cm[(int)pc[3]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_map);
+            }
+            
+            if ( ('e' == pc[1])
+                &&   ('s' == pc[2])
+                &&   ('s' == pc[3])
+                &&   ('a' == pc[4])
+                &&   ('g' == pc[5])
+                &&   ('e' == pc[6])
+                &&   (0 == (cm[(int)pc[7]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_message);
+            }
+            
+            return protobuf_try_name(x->cache_top, t, 1);
+        case 'o':   //  oneof   optional    option
+            if ( ('n' == pc[1])
+                &&   ('e' == pc[2])
+                &&   ('o' == pc[3])
+                &&   ('f' == pc[4])
+                &&   (0 == (cm[(int)pc[5]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 5,  MO_TOKEN_oneof);
+            }
+            
+            if ( ('p' == pc[1])
+                &&   ('t' == pc[2])
+                &&   ('i' == pc[3])
+                &&   ('o' == pc[4])
+                &&   ('n' == pc[5])
+                &&   ('a' == pc[6])
+                &&   ('l' == pc[7])
+                &&   (0 == (cm[(int)pc[8]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_optional);
+            }
+            
+            if ( ('p' == pc[1])
+                &&   ('t' == pc[2])
+                &&   ('i' == pc[3])
+                &&   ('o' == pc[4])
+                &&   ('n' == pc[5])
+                &&   (0 == (cm[(int)pc[6]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 6,  MO_TOKEN_option);
+            }
+            
+            return protobuf_try_name(x->cache_top, t, 1);
+        case 'p':   //  package
+            if ( ('a' == pc[1])
+                &&   ('c' == pc[2])
+                &&   ('k' == pc[3])
+                &&   ('a' == pc[4])
+                &&   ('g' == pc[5])
+                &&   ('e' == pc[6])
+                &&   (0 == (cm[(int)pc[7]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_package);
+            }
+            
+            return protobuf_try_name(x->cache_top, t, 1);
+        case 'r':   //  repeated    required    reserved    returns rpc
+            if ( ('e' == pc[1])
+                &&   ('p' == pc[2])
+                &&   ('e' == pc[3])
+                &&   ('a' == pc[4])
+                &&   ('t' == pc[5])
+                &&   ('e' == pc[6])
+                &&   ('d' == pc[7])
+                &&   (0 == (cm[(int)pc[8]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_repeated);
+            }
+            
+            if ( ('e' == pc[1])
+                &&   ('q' == pc[2])
+                &&   ('u' == pc[3])
+                &&   ('i' == pc[4])
+                &&   ('r' == pc[5])
+                &&   ('e' == pc[6])
+                &&   ('d' == pc[7])
+                &&   (0 == (cm[(int)pc[8]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_required);
+            }
+            
+            if ( ('e' == pc[1])
+                &&   ('s' == pc[2])
+                &&   ('e' == pc[3])
+                &&   ('r' == pc[4])
+                &&   ('v' == pc[5])
+                &&   ('e' == pc[6])
+                &&   ('d' == pc[7])
+                &&   (0 == (cm[(int)pc[8]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 8,  MO_TOKEN_reserved);
+            }
+            
+            if ( ('e' == pc[1])
+                &&   ('t' == pc[2])
+                &&   ('u' == pc[3])
+                &&   ('r' == pc[4])
+                &&   ('n' == pc[5])
+                &&   ('s' == pc[6])
+                &&   (0 == (cm[(int)pc[7]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_returns);
+            }
+            
+            if ( ('p' == pc[1])
+                &&   ('c' == pc[2])
+                &&   (0 == (cm[(int)pc[3]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 3,  MO_TOKEN_rpc);
+            }
+            
+            return protobuf_try_name(x->cache_top, t, 1);
+        case 's':   //  service
+            if ( ('e' == pc[1])
+                &&   ('r' == pc[2])
+                &&   ('v' == pc[3])
+                &&   ('i' == pc[4])
+                &&   ('c' == pc[5])
+                &&   ('e' == pc[6])
+                &&   (0 == (cm[(int)pc[7]]&(CM_ALPHA|CM_DEC))) )
+            {
+                return protobuf_lex_setup_token(x, t, 7,  MO_TOKEN_service);
+            }
+            
+            return protobuf_try_name(x->cache_top, t, 1);
+        case 'a':  case 'b':  case 'c':  case 'd':/*case 'e':*/
+        case 'f':  case 'g':  case 'h':  case 'j':/*case 'i':*/
+        case 'k':  case 'l':/*case 'm':*/case 'n':/*case 'o':*/
+            /*case 'p':*/case 'q':/*case 'r':  case 's':*/case 't':
+        case 'u':  case 'v':  case 'w':  case 'x':  case 'y':
+        case 'z':
+        case 'A':  case 'B':  case 'C':  case 'D':  case 'E':
+        case 'F':  case 'G':  case 'H':  case 'J':  case 'I':
+        case 'K':  case 'L':  case 'M':  case 'N':  case 'O':
+        case 'P':  case 'Q':  case 'R':  case 'S':  case 'T':
+        case 'U':  case 'V':  case 'W':  case 'X':  case 'Y':
+        case 'Z':
+        case '_':
+            return protobuf_try_name(x->cache_top, t, 1);
+        case '0':  case '1':  case '2':  case '3':  case '4':
+        case '5':  case '6':  case '7':  case '8':  case '9':
+            return protobuf_try_number(x->cache_top, t, 1);
+        case '"':
+            return protobuf_try_string(x->cache_top, t, 1);
+        case '/':
+            if ('*' == pc[1])
+            {
+                if (0 != protobuf_try_comment_range(x->cache_top, t, 2))
+                {
+                    mo_push_result(x->mo, mo_result_new("lex", 111, "invalid range comment"));
+                    return MO_TOKEN_ERROR;
+                }
+                
+                goto RETRY;
+            }
+            
+            if ('/' == pc[1])
+            {
+                protobuf_try_comment_line(x->cache_top, t, 2);
+                goto RETRY;
+            }
+            
+            //mo_push_result(mo_result_new("lex", 111, "invalid char for lex '0x%.2D'", (unsigned int)(*pc)));
+            //return MO_TOKEN_ERROR;
+        default:
+            mo_push_result(x->mo, mo_result_new("lex", 111, "invalid char for lex '0x%.2D'", (unsigned int)(*pc)));
+            return MO_TOKEN_ERROR;
+    }
+}
+
+
+
+MO_EXTERN   struct lex_t* protobuf_lex_new(int init_cache_size)
+{
+    struct protobuf_lex_t* lex = (struct protobuf_lex_t*)malloc(sizeof(struct protobuf_lex_t));
+    
+    lex->super.size       =   sizeof(struct protobuf_lex_t);
+    lex->super.cache_top  =   NULL;
+    lex->super.del        =   protobuf_lex_del;
+    lex->super.next       =   protobuf_lex_next;
+    return (struct lex_t*)lex;
+}
 

@@ -304,3 +304,14 @@ MO_EXTERN   void   mo_clear_result  (struct mo_t* mo)
         free(r);
     }
 }
+
+
+
+MO_EXTERN   struct params_t*    mo_get_params   (struct mo_t* mo)
+{
+    return NULL;
+}
+
+
+
+

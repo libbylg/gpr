@@ -1,5 +1,5 @@
 #include "protobuf.h"
-#include "plugins/plugins-protobuf/protobuf_token.h"
+#include "protobuf_token.h"
 
 #include <stdlib.h>
 
