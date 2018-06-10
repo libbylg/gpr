@@ -5,12 +5,7 @@
 
 
 
-
-
-
-
-
-
+MO_EXTERN struct unit_t* protobuf_app_unit_new();
 
 
 
