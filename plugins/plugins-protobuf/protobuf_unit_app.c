@@ -1,5 +1,5 @@
-
 #include "protobuf.h"
+
 #include "protobuf_token.h"
 
 #include <stdlib.h>
@@ -14,8 +14,9 @@ static mo_action protobuf_unit_app_accept(struct unit_t*   n, struct token_t* t)
 {
     struct protobuf_unit_app_t* u = (struct protobuf_unit_app_t*)n;
 
-    if (0 == u->state)
+    switch (u->state)
     {
+    case 0:
         switch (t->token)
         {
         case MO_TOKEN_syntax:
@@ -45,18 +46,20 @@ static mo_action protobuf_unit_app_accept(struct unit_t*   n, struct token_t* t)
         case MO_TOKEN_EOF:
             return MO_ACTION_COMPLETE;
         }
-    }
-    else
-    if (1 == u->state)
-    {
+    break;
+    case 1:
         if (';' == t->token)
         {
             u->state = 0;
             return MO_ACTION_NEEDMORE;
         }
+
+        u->state = 0;
+        return MO_ACTION_RETRY;
+    break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "unexpected token"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

@@ -38,7 +38,7 @@ static mo_action protobuf_unit_enum_item_accept(struct unit_t*   n, struct token
     break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "unexpected token"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

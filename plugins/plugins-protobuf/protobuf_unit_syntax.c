@@ -1,6 +1,8 @@
-#include "mo.h"
-#include <stdlib.h>
+#include "protobuf.h"
+
 #include "protobuf_token.h"
+
+#include <stdlib.h>
 
 struct protobuf_unit_syntax_t
 {
@@ -12,30 +14,23 @@ struct protobuf_unit_syntax_t
 static mo_action protobuf_unit_syntax_accept(struct unit_t*   n, struct token_t* t)
 {
     struct protobuf_unit_syntax_t* u = (struct protobuf_unit_syntax_t*)n;
-
-    if (MO_TOKEN_EOF == t->token)
-    {
-        mo_push_result(u->super.mo, mo_result_new("parser", 111, ""));
-        return MO_ACTION_ERROR;
-    }
-
     switch (u->state)
     {
-    case 0: //  初始状态
+    case 0: //  synta
         if (MO_TOKEN_syntax == t->token)
         {
             u->state = 1;
             return MO_ACTION_NEEDMORE;
         }
     break;
-    case 1: //  等 = 
+    case 1: //  = 
         if ('=' == t->token)
         {
             u->state = 2;
             return MO_ACTION_NEEDMORE;
         }
     break;
-    case 2: //  等 "xxx"
+    case 2: //  "xxx"
         if (MO_TOKEN_STRING == t->token)
         {
             mo_pop_unit(u->super.mo);
@@ -44,7 +39,7 @@ static mo_action protobuf_unit_syntax_accept(struct unit_t*   n, struct token_t*
     break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "'syntax' 之后需要 '='"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

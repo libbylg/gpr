@@ -1,6 +1,5 @@
-#include "mo.h"
-
 #include "protobuf.h"
+
 #include "protobuf_token.h"
 
 #include <stdlib.h>
@@ -54,18 +53,12 @@ static mo_action protobuf_unit_sevice_method_accept(struct unit_t*   n, struct t
         return MO_ACTION_RETRY;
     break;
     case 3:
-        if (';' == t->token)    //  分号可选
-        {
-            mo_pop_unit(u->super.mo);
-            return MO_ACTION_NEEDMORE;
-        }
-
         mo_pop_unit(u->super.mo);
         return MO_ACTION_RETRY;
     break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "'syntax' 之后需要 '='"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

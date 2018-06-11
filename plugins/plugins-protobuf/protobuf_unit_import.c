@@ -1,6 +1,8 @@
-#include "mo.h"
-#include <stdlib.h>
+#include "protobuf.h"
+
 #include "protobuf_token.h"
+
+#include <stdlib.h>
 
 struct protobuf_unit_import_t
 {
@@ -14,23 +16,24 @@ static mo_action protobuf_unit_import_accept(struct unit_t*   n, struct token_t*
     struct protobuf_unit_import_t* u = (struct protobuf_unit_import_t*)n;
     switch (u->state)
     {
-    case 0: //  初始状态
+    case 0: //  import
         if (MO_TOKEN_import == t->token)
         {
             u->state = 1;
             return MO_ACTION_NEEDMORE;
         }
-        break;
-    case 1: //  等 "xxxx"
+    break;
+    case 1: //  "xxxx"
         if (MO_TOKEN_STRING == t->token)
         {
+            //TODO  这里应该打开文件，push新的lex-stream
             mo_pop_unit(u->super.mo);
             return MO_ACTION_NEEDMORE;
         }
-        break;
+    break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "'syntax' 之后需要 '='"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

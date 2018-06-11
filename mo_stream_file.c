@@ -60,8 +60,9 @@ MO_EXTERN   struct stream_t*   mo_stream_file_new(const char* filename)
     {
         return NULL;
     }
+    memcpy(p, filename, filename_len + 1);
 
-    FILE* file = fopen(file, "r");
+    FILE* file = fopen(filename, "r");
     if (NULL == file)
     {
         free(p);
@@ -69,11 +70,11 @@ MO_EXTERN   struct stream_t*   mo_stream_file_new(const char* filename)
     }
 
     struct stream_file_t* stream = (struct stream_file_t*)(malloc(sizeof(struct stream_file_t)));
-    stream->base.size        = sizeof(struct stream_file_t);
-    stream->base.del         = mo_stream_file_del;
-    stream->base.read        = mo_stream_file_read;
-    stream->file             = file;
-    memcpy(stream->filename, filename, filename_len + 1);
+    stream->base.size   =   sizeof(struct stream_file_t);
+    stream->base.del    =   mo_stream_file_del;
+    stream->base.read   =   mo_stream_file_read;
+    stream->file        =   file;
+    stream->filename    =   p;
 
     return (struct stream_t*)stream;
 }

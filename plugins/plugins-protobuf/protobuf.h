@@ -18,7 +18,6 @@ MO_EXTERN struct unit_t* protobuf_unit_param_list_new();
 MO_EXTERN struct unit_t* protobuf_unit_ref_new();
 MO_EXTERN struct unit_t* protobuf_unit_reserved_new();
 MO_EXTERN struct unit_t* protobuf_unit_reserved_id_new();
-MO_EXTERN struct unit_t* protobuf_unit_reserved_name_new();
 MO_EXTERN struct unit_t* protobuf_unit_service_new();
 MO_EXTERN struct unit_t* protobuf_unit_service_field_list_new();
 MO_EXTERN struct unit_t* protobuf_unit_service_method_new();

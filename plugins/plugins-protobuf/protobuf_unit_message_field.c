@@ -1,6 +1,8 @@
-#include "mo.h"
-#include <stdlib.h>
+#include "protobuf.h"
+
 #include "protobuf_token.h"
+
+#include <stdlib.h>
 
 struct protobuf_unit_message_field_t
 {
@@ -52,7 +54,7 @@ static mo_action protobuf_unit_message_field_accept(struct unit_t*   n, struct t
     break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "'syntax' 之后需要 '='"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

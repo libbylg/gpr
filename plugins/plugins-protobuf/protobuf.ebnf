@@ -25,7 +25,7 @@
 //字段后缀
 
 字段前缀      =    "repeated" | "optional" | "required";
-引用声明      =     名字    {"."   名字 } ";"
+引用声明      =     名字    {"."   名字 } 
 方法类型      =    "init" | "exit" | "rpc"
 
 CONST

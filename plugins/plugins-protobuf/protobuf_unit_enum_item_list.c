@@ -33,7 +33,7 @@ static mo_action protobuf_unit_enum_item_list_accept(struct unit_t*   n, struct 
             u->state = 2;
             return MO_ACTION_RETRY;
         case '}':
-            u->state = 3;
+            mo_pop_unit(u->super.mo);
             return MO_ACTION_NEEDMORE;
         }
     break;
@@ -47,17 +47,9 @@ static mo_action protobuf_unit_enum_item_list_accept(struct unit_t*   n, struct 
         u->state = 1;   //  分号可选
         return MO_ACTION_RETRY;
     break;
-    case 3:
-        if (';' == t->token)
-        {
-            mo_pop_unit(u->super.mo);
-            return MO_ACTION_NEEDMORE;
-        }
-        mo_pop_unit(u->super.mo);
-        return MO_ACTION_RETRY;
-    break;
     }
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "unexpected token"));
+    
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

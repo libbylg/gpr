@@ -1,6 +1,8 @@
-#include "mo.h"
-#include <stdlib.h>
+#include "protobuf.h"
+
 #include "protobuf_token.h"
+
+#include <stdlib.h>
 
 struct protobuf_unit_package_t
 {
@@ -14,20 +16,21 @@ static mo_action protobuf_unit_package_accept(struct unit_t*   n, struct token_t
     struct protobuf_unit_package_t* u = (struct protobuf_unit_package_t*)n;
     switch (u->state)
     {
-    case 0: //  初始状态
+    case 0: //  pakage
         if (MO_TOKEN_package == t->token)
         {
             u->state = 1;
             mo_push_unit(u->super.mo, protobuf_unit_ref_new());
             return MO_ACTION_NEEDMORE;
         }
-        break;
+    break;
     case 1: //  等 引用申明完成
         mo_pop_unit(u->super.mo);
         return MO_ACTION_RETRY;
+    break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "'syntax' 之后需要 '='"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

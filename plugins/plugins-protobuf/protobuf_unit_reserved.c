@@ -1,6 +1,8 @@
-#include "mo.h"
-#include <stdlib.h>
+#include "protobuf.h"
+
 #include "protobuf_token.h"
+
+#include <stdlib.h>
 
 struct protobuf_unit_reserved_t
 {
@@ -15,7 +17,7 @@ static mo_action protobuf_unit_reserved_accept(struct unit_t*   n, struct token_
     switch (u->state)
     {
     case 0: //  等 reserved
-        if (MO_TOKEN_option == t->token)
+        if (MO_TOKEN_reserved == t->token)
         {
             u->state = 1;
             return MO_ACTION_NEEDMORE;
@@ -25,7 +27,7 @@ static mo_action protobuf_unit_reserved_accept(struct unit_t*   n, struct token_
         switch (t->token)
         {
         case MO_TOKEN_STRING:
-            mo_push_unit(u->super.mo, protobuf_unit_reserved_name_new());
+            //  没有复杂结构
             u->state = 2;
             return MO_ACTION_RETRY;
         break;
@@ -34,10 +36,10 @@ static mo_action protobuf_unit_reserved_accept(struct unit_t*   n, struct token_
             mo_push_unit(u->super.mo, protobuf_unit_reserved_id_new());
             u->state = 2;
             return MO_ACTION_RETRY;
-        case ';':
-            mo_pop_unit(u->super.mo);
-            return MO_ACTION_NEEDMORE;
         }
+
+        mo_pop_unit(u->super.mo);
+        return MO_ACTION_RETRY;
     break;
     case 2:
         if (',' == t->token)
@@ -51,7 +53,7 @@ static mo_action protobuf_unit_reserved_accept(struct unit_t*   n, struct token_
     break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "'syntax' 之后需要 '='"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 

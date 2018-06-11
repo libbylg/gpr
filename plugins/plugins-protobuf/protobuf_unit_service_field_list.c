@@ -65,7 +65,7 @@ static mo_action protobuf_unit_service_field_list_accept(struct unit_t*   n, str
     break;
     }
 
-    mo_push_result(u->super.mo, mo_result_new("parser", 111, "unexpected token"));
+    mo_push_result(u->super.mo, mo_result_new("parser", 111, "%s failed: state=%d, token=%d", __FUNCTION__, u->state, t->token));
     return MO_ACTION_ERROR;
 }
 
