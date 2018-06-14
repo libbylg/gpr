@@ -10,7 +10,7 @@
 #endif
 
 
-struct mo_entry_t;
+struct mo_entry_t
 {
     struct mo_entry_t*   next;
     void*                key;

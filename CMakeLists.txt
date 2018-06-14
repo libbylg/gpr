@@ -15,6 +15,8 @@ OPTION(DEBUG "Generate symbols for debug" OFF)
 SET(HRDS
     mo.h
     mo_utils.h
+    mo_list.h
+    mo_map.h
     )
 SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 
@@ -26,6 +28,8 @@ SET(SRCS
     mo_utils.c
     mo_stream_file.c
     mo_stream_string.c
+    mo_list.c
+    mo_map.c
     ${HRDS}
     )
 SET(INCS .)

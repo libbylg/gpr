@@ -8,7 +8,6 @@ SET(HRDS
     protobuf.h
     protobuf_lex.h
     protobuf_token.h
-    protobuf_compiler.h
     )
 SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 
@@ -16,8 +15,6 @@ SET_SOURCE_FILES_PROPERTIES(${HRDS} PROPERTIES HEADER_FILE_ONLY YES)
 
 #   All sources
 SET(SRCS
-    protobuf_compiler.c
-    protobuf_demo.c
     protobuf_lex.c
     protobuf_token.c
     protobuf_unit_app.c
@@ -34,7 +31,6 @@ SET(SRCS
     protobuf_unit_ref.c
     protobuf_unit_reserved.c
     protobuf_unit_reserved_id.c
-    protobuf_unit_reserved_name.c
     protobuf_unit_service.c
     protobuf_unit_service_field_list.c
     protobuf_unit_service_method.c
