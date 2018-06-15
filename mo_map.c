@@ -212,9 +212,8 @@ MO_MAP_EXTERN   int            mo_map_string_hash_default(char* s)
             hash &= ~x;   //清空高四位   
         }  
 
-        s++;  
-    }  
-
+        s++;
+    }
 }
 
 
