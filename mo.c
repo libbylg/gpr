@@ -7,17 +7,43 @@
 #include <stdio.h>
 
 
-struct sytx_t;
 
+///!    cache 管理
+#define compile_tOKEN_LIMIT  (32)
 
-
-
-struct mo_t
+///!    词法分析对象
+struct lex_t
 {
-    struct lex_t*       lex;
-    struct sytx_t*      sytx;
-    struct token_t*     token;
-    struct result_t*    result;
+    struct lex_t*       prev;
+    struct stream_t*    stream;     //  流对象
+    void*               ctx;        //  词法上下文
+    MO_NEXT_CALLBACK    next;       //  词法识别的函数
+};
+
+///!    输入流对象
+struct stream_t
+{
+    struct stream_t*    prev;
+    char*               name;   //  名称
+    int                 lino;   //  行号
+    char*               line;   //  行起始位置（用于计算当前处于当前行的那一列）
+    void*               ctx;    //  流对象的上下文
+    MO_CLOSE_CALLBACK   close;  //  流关闭函数
+    MO_READ_CALLBACK    read;   //  流读取函数
+};
+
+
+
+
+///!    语法分析单元
+typedef     mo_action (*MO_ACCEPT_CALLBACK)(struct unit_t*   u, struct token_t* t);
+struct unit_t
+{
+    int                 size;
+    struct unit_t*      prev;
+    struct compile_t*   mo;
+    MO_DEL_CALLBACK     del;
+    MO_ACCEPT_CALLBACK  accept;
 };
 
 
@@ -27,7 +53,6 @@ struct sytx_t
 {
     struct unit_t*      unit_top;
 };
-
 
 
 
@@ -49,9 +74,9 @@ static void             mo_cache_del(void* obj)
 
 static struct cache_t* mo_cache_new(struct stream_t* stream, int init_buf_size)
 {
-    ///!    + MO_TOKEN_LIMIT 是为了给提前扫描的符号预留预读字符数,避免访问无效内存
+    ///!    + compile_tOKEN_LIMIT 是为了给提前扫描的符号预留预读字符数,避免访问无效内存
     ///!    + 1              是为了当遇到最后一行时,需要额外给缓冲区补一个\n符号
-    int real_size = init_buf_size + MO_TOKEN_LIMIT + 1;
+    int real_size = init_buf_size + compile_tOKEN_LIMIT + 1;
     char* buf = (char*)malloc(sizeof(char) * (real_size));
     if (NULL == buf)
     {
@@ -88,9 +113,9 @@ static struct cache_t* mo_cache_new(struct stream_t* stream, int init_buf_size)
 
 
 
-MO_EXTERN   struct mo_t*        mo_new          ()
+MO_EXTERN   struct compile_t*        mo_new          ()
 {
-    struct mo_t* mo = (struct mo_t*)malloc(sizeof(struct mo_t));
+    struct compile_t* mo = (struct compile_t*)malloc(sizeof(struct compile_t));
     mo->lex     =   NULL;
     mo->sytx    =   (struct sytx_t*)malloc(sizeof(struct sytx_t));
     memset(mo->sytx, 0, sizeof(struct sytx_t));
@@ -102,7 +127,7 @@ MO_EXTERN   struct mo_t*        mo_new          ()
 
 
 
-MO_EXTERN   void                mo_del          (struct mo_t* mo)
+MO_EXTERN   void                mo_del          (struct compile_t* mo)
 {
     free(mo);
 }
@@ -110,7 +135,7 @@ MO_EXTERN   void                mo_del          (struct mo_t* mo)
 
 
 
-MO_EXTERN   void                mo_reg_lex      (struct mo_t* mo, struct lex_t*    x)
+MO_EXTERN   void                mo_reg_lex      (struct compile_t* mo, struct lex_t*    x)
 {
     mo->lex = x;
 }
@@ -118,7 +143,7 @@ MO_EXTERN   void                mo_reg_lex      (struct mo_t* mo, struct lex_t* 
 
 
 
-MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m)
+MO_EXTERN   void                mo_push_stream  (struct compile_t* mo, struct stream_t* m)
 {
     struct params_t* params = mo_get_params(mo);
     struct cache_t* cache  = mo_cache_new(m, params->cache_size);
@@ -129,7 +154,7 @@ MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_
 
 
 
-MO_EXTERN   void                mo_push_unit    (struct mo_t* mo, struct unit_t*   u)
+MO_EXTERN   void                mo_push_unit    (struct compile_t* mo, struct unit_t*   u)
 {
     u->prev = mo->sytx->unit_top;
     mo->sytx->unit_top = u;
@@ -138,7 +163,7 @@ MO_EXTERN   void                mo_push_unit    (struct mo_t* mo, struct unit_t*
 
 
 
-MO_EXTERN   struct unit_t*      mo_pop_unit     (struct mo_t* mo)
+MO_EXTERN   struct unit_t*      mo_pop_unit     (struct compile_t* mo)
 {
     if (NULL == mo->sytx->unit_top)
     {
@@ -153,7 +178,7 @@ MO_EXTERN   struct unit_t*      mo_pop_unit     (struct mo_t* mo)
 
 
 
-MO_EXTERN   struct unit_t*      mo_top_unit     (struct mo_t* mo)
+MO_EXTERN   struct unit_t*      compile_top_unit     (struct compile_t* mo)
 {
     return mo->sytx->unit_top;
 }
@@ -161,14 +186,14 @@ MO_EXTERN   struct unit_t*      mo_top_unit     (struct mo_t* mo)
 
 
 
-MO_EXTERN   mo_errno            mo_walk(struct mo_t* mo)
+MO_EXTERN   mo_errno            mo_walk(struct compile_t* mo)
 {
     mo_action action = MO_ACTION_RETRY;
-    mo_token  token  = MO_TOKEN_ERROR;
+    compile_token  token  = compile_tOKEN_ERROR;
     
 READ_MORE:
     token = (*(mo->lex->next))(mo->lex, mo->token);
-    if (MO_TOKEN_ERROR == token)
+    if (compile_tOKEN_ERROR == token)
     {
         return 111;
     }
@@ -178,7 +203,7 @@ TRYAGAIN:
     if (MO_ACTION_NEEDMORE == action)
     {
         ///!    都没没数据了，还在请求更多token，一定是bug了
-        if (MO_TOKEN_EOF == token)
+        if (compile_tOKEN_EOF == token)
         {
             return 111;
         }
@@ -189,7 +214,7 @@ TRYAGAIN:
     if (MO_ACTION_RETRY == action)
     {
         ///!    所有的数据接收完毕，且刚好识别完毕
-        if (MO_TOKEN_EOF == token)
+        if (compile_tOKEN_EOF == token)
         {
             return 0;
         }
@@ -215,7 +240,7 @@ MO_EXTERN int mo_cache_load(struct cache_t*    cache)
 
     ///!    如果缓冲区中还有数据，那么需要将数据移动到buf首部
     int len = (cache->pe - cache->pc);
-    //if ((len > 0) && (len <= MO_TOKEN_LIMIT)) ///<    如果token本身比较短，那么可以考虑做一次数据迁移
+    //if ((len > 0) && (len <= compile_tOKEN_LIMIT)) ///<    如果token本身比较短，那么可以考虑做一次数据迁移
     if (len > 0)
     {
         memmove(cache->buf, cache->pc, len);
@@ -250,7 +275,7 @@ MO_EXTERN int mo_cache_load(struct cache_t*    cache)
 
 
 
-MO_EXTERN   void   mo_push_result  (struct mo_t* mo, struct result_t* r)
+MO_EXTERN   void   mo_push_result  (struct compile_t* mo, struct result_t* r)
 {
     r->prev    = mo->result;
     mo->result = r->prev;
@@ -297,7 +322,7 @@ MO_EXTERN   struct result_t*    mo_result_new   (char* module, int value, char* 
 
 
 
-MO_EXTERN   void   mo_clear_result  (struct mo_t* mo)
+MO_EXTERN   void   mo_clear_result  (struct compile_t* mo)
 {
     for (struct result_t* r = mo->result; NULL != r; r = mo->result)
     {
@@ -307,7 +332,7 @@ MO_EXTERN   void   mo_clear_result  (struct mo_t* mo)
 
 
 
-MO_EXTERN   struct params_t*    mo_get_params   (struct mo_t* mo)
+MO_EXTERN   struct params_t*    mo_get_params   (struct compile_t* mo)
 {
     return NULL;
 }

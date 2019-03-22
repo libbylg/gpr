@@ -60,124 +60,102 @@ struct token_t;
 typedef     void      (*MO_DEL_CALLBACK   )(void* obj);
 
 
-
-///!    核心参数
-struct params_t
-{
-    int cache_size;
-};
-
-
 ///!    词法识别出来的符号
 struct token_t
 {
-    int                 size;       ///<    整个token所占的存储空间
-    mo_token            token;      ///<    符号的编号
-    char*               text[2];    ///<    符号的文本范围
+    struct token_t*     prev;
+    int                 size;       //  整个token所占的存储空间
+    mo_token            type;       //  符号的类型编号
+    int                 opts;       //  选项
+    union 
+    {
+        struct 
+        {
+            char        text[0];    //  符号的文本范围
+        };
+        struct 
+        {
+            char*       ref[2];     //  符号的文本范围
+        };
+    };
 };
-
-
 
 
 ///!    词法和语法解析结果
 struct result_t
 {
-    struct result_t*    prev;
-    int                 value;
-    char                module[10];
+    int                 error;
     char                text[500];
 };
 
-
-
-
-///!    cache 管理
-#define MO_TOKEN_LIMIT  (32)
+//  词法识别时，用到的cache
 struct cache_t
 {
-    int                 size;
-    MO_DEL_CALLBACK     del;
-    struct cache_t*     prev;       ///<   前一个cache
-    struct stream_t*    stream;     ///<    每个cache都对应一个输入流
-    struct mo_t*        mo;
-    int                 buf_size;   ///<    数据缓冲区的总大小
-    char*               buf;        ///<    数据缓冲区
-    char*               buf_limit;  ///<    cache中可用来缓存数据的位置
-    char*               pc;         ///<    当前识别位置指针
-    char*               pe;         ///<    有效数据结束位置，*pe永远是\n
-    char*               line;       ///<    行起始位置
-    int                 lino;       ///<    行号
+    int                 rsrv;       //  预留大小
+    int                 cap;        //  数据缓冲区的总容量（总是等于：limit - buf）
+    char*               buf;        //  数据缓冲区
+    char*               limit;      //  缓冲区结尾
+    char*               pos;        //  当前识别位置指针
+    char*               end;        //  有效数据结束位置，*end永远是\n
+    void*               ctx;        //  词法识别的cache上下文
 };
 
-
-
-
-///!    词法分析对象
-typedef     mo_token  (*MO_NEXT_CALLBACK  )(struct lex_t*    x, struct token_t* t);
-struct lex_t
+//  上下文
+struct context_t
 {
     int                 size;
-    struct cache_t*     cache_top;
-    struct mo_t*        mo;
-    MO_DEL_CALLBACK     del;
-    MO_NEXT_CALLBACK    next;
+    struct context_t*   prev;
+    int                 state;
 };
 
+struct compile_t;
+struct lex_t;
+struct sytx_t;
+struct unit_t;
+struct stream_t;
 
+struct compile_t
+{
+    struct lex_t*       lex;
+    struct sytx_t*      sytx;
+    struct token_t*     token;
+    struct result_t*    result;
+};
 
-
-///!    输入流对象
 #define MO_READ_OK      (0)
 #define MO_READ_EOF     (1)
 #define MO_READ_ERROR   (2)
-typedef     int       (*MO_READ_CALLBACK  )(struct stream_t* m, char** pos, char* end);
-struct stream_t
-{
-    int                 size;
-    struct mo_t*        mo;
-    MO_DEL_CALLBACK     del;
-    MO_READ_CALLBACK    read;
-};
+
+typedef     int       (*MO_READ_CALLBACK  )(void* ctx, char** pos, char* end);
+typedef     int       (*MO_CLOSE_CALLBACK )(void* ctx);
+
+typedef     mo_token  (*MO_NEXT_CALLBACK  )(void* ctx, struct lex_t*  x, struct token_t* t, struct result_t* r);
+typedef     mo_action (*MO_ACCEPT_CALLBACK)(void* ctx, struct unit_t* u, struct token_t* t, struct result_t* r);
+
+MO_EXTERN   struct cache_t*     mo_cache_new    (void* ctx, int cap, int rsrv);
+MO_EXTERN   struct lex_t*       mo_lex_new      (void* ctx, MO_NEXT_CALLBACK next);
+MO_EXTERN   struct sytx_t*      mo_sytx_new     (void* ctx);
+MO_EXTERN   struct lex_t*       mo_unit_new     (void* ctx, MO_ACCEPT_CALLBACK accept);
+MO_EXTERN   struct stream_t*    mo_stream_new   (void* ctx, MO_READ_CALLBACK   accept, MO_READ_CALLBACK close);
 
 
+MO_EXTERN   struct compile_t*   mo_compile_new  (void* ctx, struct lex_t* x, struct sytx_t* y, struct cache_t* c);
+MO_EXTERN   void                mo_compile_del  (struct compile_t* p);
+
+MO_EXTERN   void                mo_compile_push_stream  (struct compile_t* p, struct stream_t* m);
+MO_EXTERN   struct stream_t*    mo_compile_pop__stream  (struct compile_t* p);
+
+MO_EXTERN   void                mo_compile_push_unit    (struct compile_t* p, struct unit_t*   u);
+MO_EXTERN   struct unit_t*      mo_compile_top_unit     (struct compile_t* p);
+
+MO_EXTERN   mo_errno            mo_compile_walk         (struct compile_t* p);
+
+MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* r);
+MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t*  k);
 
 
-///!    语法分析单元
-typedef     mo_action (*MO_ACCEPT_CALLBACK)(struct unit_t*   u, struct token_t* t);
-struct unit_t
-{
-    int                 size;
-    struct unit_t*      prev;
-    struct mo_t*        mo;
-    MO_DEL_CALLBACK     del;
-    MO_ACCEPT_CALLBACK  accept;
-};
-
-
-
-
-
-MO_EXTERN   struct mo_t*        mo_new          ();
-MO_EXTERN   void                mo_del          (struct mo_t* mo);
-MO_EXTERN   struct params_t*    mo_get_params   (struct mo_t* mo);
-MO_EXTERN   void                mo_reg_lex      (struct mo_t* mo, struct lex_t*    x);
-MO_EXTERN   void                mo_push_stream  (struct mo_t* mo, struct stream_t* m);
-MO_EXTERN   void                mo_push_unit    (struct mo_t* mo, struct unit_t*   u);
-MO_EXTERN   struct unit_t*      mo_pop_unit     (struct mo_t* mo);
-MO_EXTERN   struct unit_t*      mo_top_unit     (struct mo_t* mo);
-MO_EXTERN   mo_errno            mo_walk         (struct mo_t* mo);
-
-
-MO_EXTERN   struct result_t*    mo_result_new   (char* module, int value, char* format, ...);
-MO_EXTERN   void                mo_push_result  (struct mo_t* mo, struct result_t* r);
-MO_EXTERN   void                mo_clear_result (struct mo_t* mo);
-
-
-MO_EXTERN   struct stream_t*    mo_stream_file_new  (const char* filename);
-MO_EXTERN   struct stream_t*    mo_stream_string_new(char* str, int size, int auto_free);
-
-
-MO_EXTERN   int                 mo_cache_load(struct cache_t* c); ///<    从流中加载数据
+MO_EXTERN   struct stream_t*    mo_stream_file_new      (const char* filename);
+MO_EXTERN   struct stream_t*    mo_stream_string_new    (char* str, int size, int auto_free);
 
 
 #endif//__mo_
