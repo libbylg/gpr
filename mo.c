@@ -24,7 +24,8 @@ struct lex_t
 
 struct sytx_t
 {
-    void*               prev;   //  前一个词法对象
+    void*               prev;       //  前一个词法对象
+    void*               ctx;        //  语法上下文
     MO_DRIVE_CALLBACK   drive;
 };
 

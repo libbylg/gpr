@@ -44,18 +44,49 @@ struct lex_t;
 struct sytx_t;
 struct compile_t;
 
-#define MO_TYPE_result_t    (-1)
-#define MO_TYPE_token_t     (-2)
-#define MO_TYPE_unit_t      (-3)
-#define MO_TYPE_stream_t    (-4)
-#define MO_TYPE_cache_t     (-5)
-#define MO_TYPE_lex_t       (-6)
-#define MO_TYPE_sytx_t      (-7)
-#define MO_TYPE_compile_t   (-8)
-#define MO_TYPE(t)          (MO_TYPE_##t)
 
 //  用于result
 #define MO_OK               (0)
+
+
+
+//  释放对象的接口
+typedef     void        (*MO_DEL_CALLBACK   )(void* obj);
+
+
+//  读取数据的返回值定义
+#define MO_READ_OK      (0)
+#define MO_READ_EOF     (1)
+#define MO_READ_ERROR   (2)
+typedef     int         (*MO_READ_CALLBACK  )(void* ctx, char** pos, char* end);
+typedef     void        (*MO_CLOSE_CALLBACK )(void* ctx);
+
+
+//  几个内定的词法编号
+#define     MO_TOKEN_UNKNOWN    (0x00000000)
+#define     MO_TOKEN_EOF        (0xFFFFFFFE)
+#define     MO_TOKEN_ERROR      (0xFFFFFFFF)
+typedef     mo_token    (*MO_NEXT_CALLBACK  )(void* ctx, struct lex_t*  p, struct token_t* t, struct result_t* r);
+
+
+//  语法分析后返回的对当前 token 的处理建议
+#define     MO_ACTION_ERROR     (0)     ///<    遇到错误
+#define     MO_ACTION_NEEDMORE  (1)     ///<    读取更多符号
+#define     MO_ACTION_RETRY     (2)     ///<    重试
+#define     MO_ACTION_COMPLETE  (3)     ///<    识别完成
+typedef     mo_action   (*MO_ACCEPT_CALLBACK)(void* ctx, struct sytx_t* y, struct token_t* t, struct result_t* r);
+
+
+//  语法驱动器
+typedef     mo_errno    (*MO_DRIVE_CALLBACK )(void* ctx, struct compile_t* p);
+
+//  对象
+struct object_t
+{
+    int                 type;
+    char                name[64];
+    MO_DEL_CALLBACK     del;
+};
 
 //  词法识别出来的符号
 struct token_t
@@ -135,17 +166,34 @@ struct unit_t
 };
 
 
+//  词法分析对象
+struct lex_t
+{
+    void*               prev;       //  前一个词法对象
+    int                 type;       //  对象类型编号
+    void*               ctx;        //  词法上下文
+    MO_NEXT_CALLBACK    next;       //  词法识别的函数
+
+    struct cache_t*     cache;
+    struct stream_t*    stream;
+};
+
+
+//  语法分析对象
+struct sytx_t
+{
+    void*               prev;       //  前一个词法对象
+    int                 type;       //  对象类型编号
+    struct unit_t*      unit;       //  语法识别单元
+};
+
 //  编译器
 struct compile_t
 {
     void*               prev;
     int                 type;
-    void*               ctx;
-    struct sytx_t*      sytx;
     struct lex_t*       lex;
-    struct cache_t*     cache;
-    struct stream_t*    stream;
-    struct unit_t*      unit;
+    struct sytx_t*      sytx;
     struct token_t*     token;
     struct result_t*    result;
 };
@@ -160,60 +208,40 @@ struct anchor_t
 };
 
 
-//  读取数据的返回值定义
-#define MO_READ_OK      (0)
-#define MO_READ_EOF     (1)
-#define MO_READ_ERROR   (2)
-typedef     int       (*MO_READ_CALLBACK  )(void* ctx, char** pos, char* end);
-typedef     void      (*MO_CLOSE_CALLBACK )(void* ctx);
+
+//  注册类
+MO_EXTERN   int                 mo_register_object       (char* name, MO_DEL_CALLBACK del);
 
 
-//  几个内定的词法编号
-#define     MO_TOKEN_UNKNOWN    (0x00000000)
-#define     MO_TOKEN_EOF        (0xFFFFFFFE)
-#define     MO_TOKEN_ERROR      (0xFFFFFFFF)
-typedef     mo_token  (*MO_NEXT_CALLBACK  )(void* ctx, struct compile_t*  p, struct token_t* t, struct result_t* r);
-
-
-//  语法分析后返回的对当前 token 的处理建议
-#define     MO_ACTION_ERROR     (0)     ///<    遇到错误
-#define     MO_ACTION_NEEDMORE  (1)     ///<    读取更多符号
-#define     MO_ACTION_RETRY     (2)     ///<    重试
-#define     MO_ACTION_COMPLETE  (3)     ///<    识别完成
-typedef     mo_action   (*MO_ACCEPT_CALLBACK)(void* ctx, struct compile_t* p, struct token_t* t, struct result_t* r);
-
-
-//  释放对象的接口
-typedef     void        (*MO_DEL_CALLBACK   )(void* ctx, void* obj);
-
-
-//  语法驱动器
-typedef     mo_errno    (*MO_DRIVE_CALLBACK )(void* ctx, struct compile_t* p);
-
-
-MO_EXTERN   struct lex_t*       mo_lex_new      (void* ctx, MO_NEXT_CALLBACK next);
-MO_EXTERN   struct sytx_t*      mo_sytx_new     (void* ctx, MO_DRIVE_CALLBACK drive);
-
-MO_EXTERN   struct cache_t*     mo_cache_new    (int cap, int rsrv);
-
-MO_EXTERN   struct unix_t*      mo_unit_new     (void* ctx, MO_ACCEPT_CALLBACK accept);
-MO_EXTERN   struct stream_t*    mo_stream_new   (void* ctx, MO_READ_CALLBACK   read, MO_READ_CALLBACK close);
-
-MO_EXTERN   struct compile_t*   mo_compile_init         (struct compile_t* p, void* ctx, struct sytx_t* y, struct lex_t* x, struct cache_t* c);
-MO_EXTERN   void                mo_compile_clear        (struct compile_t* p);
-
-MO_EXTERN   void                mo_compile_push_stream  (struct compile_t* p, struct stream_t* m);
-MO_EXTERN   struct stream_t*    mo_compile_pop_stream   (struct compile_t* p);
-
-MO_EXTERN   void                mo_compile_push_unit    (struct compile_t* p, struct unit_t*   u);
-MO_EXTERN   struct unit_t*      mo_compile_top_unit     (struct compile_t* p);
-
+//  基础对象的接口
+MO_EXTERN   struct result_t*    mo_result_new           ();
 MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* r);
 MO_EXTERN   mo_bool             mo_result_ok            (struct result_t* r);
 
+MO_EXTERN   struct token_t*     mo_token_new            ();
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t*  k);
 
-MO_EXTERN   void                mo_sytx_drive_default(void* ctx, struct compile_t* p);
+//  词法识别的接口
+MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_READ_CALLBACK close);
+MO_EXTERN   struct lex_t*       mo_lex_new              (void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
+MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
+MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
+MO_EXTERN   struct result_t*    mo_lex_next_token       (struct lex_t* x, struct token_t* t, struct result_t* r);
+
+//  语法识别的接口
+MO_EXTERN   struct unix_t*      mo_unit_new             (void* ctx, MO_ACCEPT_CALLBACK accept);
+MO_EXTERN   struct sytx_t*      mo_sytx_new             ();
+MO_EXTERN   void                mo_sytx_push_unit       (struct sytx_t* y, struct unit_t*   u);
+MO_EXTERN   struct unit_t*      mo_sytx_top_unit        (struct sytx_t* y);
+MO_EXTERN   struct result_t*    mo_sytx_accept_token    (struct sytx_t* y, struct token_t* t, struct result_t* r);
+
+//  编译器接口
+MO_EXTERN   struct compile_t*   mo_compile_init         (struct compile_t* p, struct lex_t* x, struct sytx_t* y);
+MO_EXTERN   void                mo_compile_clear        (struct compile_t* p);
+MO_EXTERN   void                mo_compile_drive        (struct compile_t* p);
+
+
+MO_EXTERN   struct stream_t*   mo_stream_file_new       (const char* filename);
 
 #endif//__mo_
 

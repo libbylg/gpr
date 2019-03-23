@@ -12,13 +12,18 @@ static mo_token  demo_lex_next(void* ctx, struct compile_t*  p, struct token_t* 
 
 int main(int argc, char* args[])
 {
-    struct cache_t cache = {0};
-    mo_cache_init(&cache, 1024, 32);
-
     struct lex_t*  lex  = mo_lex_new(NULL, demo_lex_next);
-    struct sytx_t* sytx = mo_sytx_new(NULL, mo_sytx_drive_default);
-    mo_cache_init(&cache, 1024, 32);
-    mo_compile_new(NULL, )
+    struct stream_t* stream = mo_stream_file_new("F:\\dev\\github.com\\libbylg\\mo\\test\\test1.proto");
+    mo_lex_push_stream(lex, stream);
+
+    struct token_t* k = mo_token_new();
+    struct result_t* r = mo_result_new();
+    mo_lex_next_token(lex, k, r);
+
+    while (mo_result_ok(r)) {
+        printf("[%d]\n", k->id);
+    }
+
     return 0;
 }
 

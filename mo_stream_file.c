@@ -70,8 +70,6 @@ MO_EXTERN   struct stream_t*   mo_stream_file_new(const char* filename)
     }
 
     struct stream_file_t* stream = (struct stream_file_t*)(malloc(sizeof(struct stream_file_t)));
-    stream->base.size   =   sizeof(struct stream_file_t);
-    stream->base.del    =   mo_stream_file_del;
     stream->base.read   =   mo_stream_file_read;
     stream->file        =   file;
     stream->filename    =   p;
