@@ -11,47 +11,21 @@
 ///!    cache 管理
 #define compile_tOKEN_LIMIT  (32)
 
+
 ///!    词法分析对象
 struct lex_t
 {
-    struct lex_t*       prev;
-    struct stream_t*    stream;     //  流对象
+    void*               prev;       //  前一个词法对象
     void*               ctx;        //  词法上下文
     MO_NEXT_CALLBACK    next;       //  词法识别的函数
 };
-
-///!    输入流对象
-struct stream_t
-{
-    struct stream_t*    prev;
-    char*               name;   //  名称
-    int                 lino;   //  行号
-    char*               line;   //  行起始位置（用于计算当前处于当前行的那一列）
-    void*               ctx;    //  流对象的上下文
-    MO_CLOSE_CALLBACK   close;  //  流关闭函数
-    MO_READ_CALLBACK    read;   //  流读取函数
-};
-
-
-
-
-///!    语法分析单元
-typedef     mo_action (*MO_ACCEPT_CALLBACK)(struct unit_t*   u, struct token_t* t);
-struct unit_t
-{
-    int                 size;
-    struct unit_t*      prev;
-    struct compile_t*   mo;
-    MO_DEL_CALLBACK     del;
-    MO_ACCEPT_CALLBACK  accept;
-};
-
 
 
 
 struct sytx_t
 {
-    struct unit_t*      unit_top;
+    void*               prev;   //  前一个词法对象
+    MO_DRIVE_CALLBACK   drive;
 };
 
 
