@@ -354,9 +354,7 @@ RETRY:
 
     //  如果确实遇到了文本换行
     if (pc != cache->end) {
-        cache->anchor->lino++;  ///<    进入下一行
-        cache->anchor->line = pc + 1;
-        cache->pos = pc + 1;
+        mo_lex_newline(x, r, pc);
         goto RETRY;
     }
 
@@ -376,3 +374,21 @@ RETRY:
     //  如果读取数据成功，且数据增加，那么继续尝试一次
     goto RETRY;
 }
+
+
+MO_EXTERN   mo_byte*            mo_lex_newline(struct lex_t* x, struct result_t* r, mo_byte* pc)
+{
+    x->cache->anchor->lino++;  ///<    进入下一行
+    x->cache->anchor->line = pc + 1;
+    x->cache->pos = pc + 1;
+    return x->cache->pos;
+}
+
+MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline)
+{
+    pc = pc + pervsize;
+    while (1) {
+        if (*pc == escape_newline)
+    }
+}
+

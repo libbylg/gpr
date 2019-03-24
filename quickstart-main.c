@@ -21,7 +21,10 @@ static mo_token  demo_lex_next(void* ctx, struct lex_t* x, struct token_t* t, st
         pc = mo_lex_locate(x, r, pc);
 
         switch (*pc) {
-            case ' ': case 
+            case '\n':
+                if (pc == cache->end) { return MO_TOKEN_EOF; }
+                return mo_result_errorf(112, "");
+
         }
     }
     return MO_TOKEN_UNKNOWN;
