@@ -8,7 +8,6 @@ struct stream_file_t
 {
     struct stream_t base;
     FILE*           file;
-    char*           filename;
 };
 
 
@@ -19,9 +18,9 @@ static void mo_stream_file_del(void* obj)
     {
         fclose(stream->file);
     }
-    if (NULL != stream->filename)
+    if (NULL != stream->base.anchor.name)
     {
-        free(stream->filename);
+        free(stream->base.anchor.name);
     }
 
     free(stream);
@@ -56,23 +55,27 @@ MO_EXTERN   struct stream_t*   mo_stream_file_new(const char* filename)
 {
     size_t filename_len = strlen(filename);
     char* p = (char*)malloc(filename_len + 1);
-    if (NULL != p)
-    {
+    if (NULL != p) {
         return NULL;
     }
     memcpy(p, filename, filename_len + 1);
 
     FILE* file = fopen(filename, "r");
-    if (NULL == file)
-    {
+    if (NULL == file) {
         free(p);
         return NULL;
     }
 
     struct stream_file_t* stream = (struct stream_file_t*)(malloc(sizeof(struct stream_file_t)));
-    stream->base.read   =   mo_stream_file_read;
-    stream->file        =   file;
-    stream->filename    =   p;
+    stream->base.prev = stream;
+    stream->base.typeid = mo_define_class("stream_file_t", mo_stream_file_del);
+    stream->base.anchor.prev = &(stream->base.anchor);
+    stream->base.anchor.typeid = mo_typeid_of("anchor_t");
+    stream->base.anchor.name = strdup(filename);
+    stream->base.anchor.lino = 0;
+    stream->base.anchor.line = NULL;
+    stream->base.read = mo_stream_file_read;
+    stream->file = file;
 
     return (struct stream_t*)stream;
 }

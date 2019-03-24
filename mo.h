@@ -80,10 +80,23 @@ typedef     mo_action   (*MO_ACCEPT_CALLBACK)(void* ctx, struct sytx_t* y, struc
 //  语法驱动器
 typedef     mo_errno    (*MO_DRIVE_CALLBACK )(void* ctx, struct compile_t* p);
 
-//  对象
-struct object_t
+//#define MO_CLASS(t)             \
+//    struct token_t*     prev;   \
+//    int                 type;
+//
+//#define MO_DEFINE(new_name, parent, xxx)
+//struct new_name
+//{
+//    struct token_t*     prev;
+//    int                 type;
+//    yyy
+//};
+
+//  类
+struct class_t
 {
-    int                 type;
+    void*               prev;
+    int                 typeid;
     char                name[64];
     MO_DEL_CALLBACK     del;
 };
@@ -92,7 +105,7 @@ struct object_t
 struct token_t
 {
     struct token_t*     prev;
-    int                 type;
+    int                 typeid;
     int                 size;       //  整个token所占的存储空间
     mo_token            id;         //  符号的类型编号
     int                 opts;       //  选项
@@ -114,9 +127,20 @@ struct token_t
 struct result_t
 {
     struct result_t*    prev;
-    int                 type;
+    int                 typeid;
     int                 error;
     char                text[500];
+};
+
+
+//  词法定位信息
+struct anchor_t
+{
+    struct result_t*    prev;   //  
+    int                 typeid; //  
+    char*               name;   //  名称
+    int                 lino;   //  行号
+    char*               line;   //  行起始位置（用于计算当前处于当前行的那一列）
 };
 
 
@@ -124,7 +148,7 @@ struct result_t
 struct cache_t
 {
     void*               prev;       //  前一个cache对象
-    int                 type;
+    int                 typeid;
     struct anchor_t*    anchor;     //  词法定位信息(直接引用自 stream 对象)
     int                 rsrv;       //  预留大小
     int                 cap;        //  数据缓冲区的总容量（总是等于：limit - buf）
@@ -139,7 +163,7 @@ struct cache_t
 struct stats_t
 {
     void*               prev;       //  前一个状态
-    int                 type;
+    int                 typeid;
     int                 state;      //  当前的状态值
 };
 
@@ -148,7 +172,7 @@ struct stats_t
 struct stream_t
 {
     void*               prev;   //  前一个流对象
-    int                 type;
+    int                 typeid;
     struct anchor_t     anchor; //  词法识别的锚点信息
     void*               ctx;    //  流对象的上下文
     MO_CLOSE_CALLBACK   close;  //  流关闭函数
@@ -160,7 +184,7 @@ struct stream_t
 struct unit_t
 {
     void*               prev;   //  前一个语法单元
-    int                 type;
+    int                 typeid;
     void*               ctx;    //  词法上下文
     MO_ACCEPT_CALLBACK  accept; //  是否接收当前词法单元
 };
@@ -170,7 +194,7 @@ struct unit_t
 struct lex_t
 {
     void*               prev;       //  前一个词法对象
-    int                 type;       //  对象类型编号
+    int                 typeid;       //  对象类型编号
     void*               ctx;        //  词法上下文
     MO_NEXT_CALLBACK    next;       //  词法识别的函数
 
@@ -183,7 +207,7 @@ struct lex_t
 struct sytx_t
 {
     void*               prev;       //  前一个词法对象
-    int                 type;       //  对象类型编号
+    int                 typeid;       //  对象类型编号
     struct unit_t*      unit;       //  语法识别单元
 };
 
@@ -191,7 +215,7 @@ struct sytx_t
 struct compile_t
 {
     void*               prev;
-    int                 type;
+    int                 typeid;
     struct lex_t*       lex;
     struct sytx_t*      sytx;
     struct token_t*     token;
@@ -199,18 +223,11 @@ struct compile_t
 };
 
 
-//  词法定位信息
-struct anchor_t
-{
-    char*               name;   //  名称
-    int                 lino;   //  行号
-    char*               line;   //  行起始位置（用于计算当前处于当前行的那一列）
-};
-
-
-
 //  注册类
-MO_EXTERN   int                 mo_register_object       (char* name, MO_DEL_CALLBACK del);
+MO_EXTERN   int                 mo_define_class         (char* name, MO_DEL_CALLBACK del);
+MO_EXTERN   struct class_t*     mo_class_of             (int typeid);
+MO_EXTERN   int                 mo_typeid_of            (char* name);
+
 
 
 //  基础对象的接口
@@ -229,7 +246,7 @@ MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
 MO_EXTERN   struct result_t*    mo_lex_next_token       (struct lex_t* x, struct token_t* t, struct result_t* r);
 
 //  语法识别的接口
-MO_EXTERN   struct unix_t*      mo_unit_new             (void* ctx, MO_ACCEPT_CALLBACK accept);
+MO_EXTERN   struct unit_t*      mo_unit_new             (void* ctx, MO_ACCEPT_CALLBACK accept);
 MO_EXTERN   struct sytx_t*      mo_sytx_new             ();
 MO_EXTERN   void                mo_sytx_push_unit       (struct sytx_t* y, struct unit_t*   u);
 MO_EXTERN   struct unit_t*      mo_sytx_top_unit        (struct sytx_t* y);

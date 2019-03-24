@@ -45,17 +45,23 @@ static int  stream_string_read(struct stream_t* m, char** pos, char* end)
     return MO_READ_OK;
 }
 
+
 MO_EXTERN   struct stream_t*   mo_stream_string_new(char* str, int size, int auto_free)
 {
     struct stream_string_t* stream = (struct stream_string_t*)(malloc(sizeof(struct stream_string_t)));
-    stream->base.size       =   sizeof(struct stream_string_t);
-    stream->base.del        =   stream_string_del;
-    stream->base.read       =   stream_string_read;
-    stream->data            =   str;
-    stream->auto_free       =   auto_free;
+    stream->base.prev = stream;
+    stream->base.typeid = mo_define_class("stream_string_t", stream_string_del);
+    stream->base.read = stream_string_read;
+    stream->base.anchor.prev = &(stream->base.anchor);
+    stream->base.anchor.typeid = mo_typeid_of("anchor");
+    stream->base.anchor.name = strdup("string");
+    stream->base.anchor.line = NULL;
+    stream->base.anchor.lino = 0;
+    stream->data = str;
+    stream->auto_free = auto_free;
 
-    stream->end             =   str + size;
-    stream->r               =   str;
+    stream->end = str + size;
+    stream->r = str;
 
     return (struct stream_t*)stream;
 }

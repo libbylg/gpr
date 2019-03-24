@@ -5,28 +5,63 @@
 #define MO_CACHE_CAP_DEF    (1024)
 #define MO_CACHE_RSRV_DEF   (32)
 
-static int                  mo_objects_count = 0;
-static struct object_t      mo_objects[100] = {0};
+static int                 mo_classes_count = 0;
+static struct class_t      mo_classes[100] = {0};
 
-MO_EXTERN   int                 mo_register_object(char* name, MO_DEL_CALLBACK del)
+static void mo_class_del(void* obj)
 {
-    if (mo_objects_count >= (sizeof(mo_objects) / sizeof(mo_objects[0]))) {
+}
+
+MO_EXTERN   int                 mo_define_class(char* name, MO_DEL_CALLBACK del)
+{
+    if (0 == mo_classes_count) {
+        struct class_t* cls = mo_classes + 0;
+        cls->prev = cls;
+        cls->typeid = 0;    //  指向自己
+        strcpy(cls->name, sizeof(cls->name), "class_t");
+        cls->del = mo_class_del;
+        mo_classes_count = 1;
+    }
+
+    if (mo_classes_count >= (sizeof(mo_classes) / sizeof(mo_classes[0]))) {
         return -1;
     }
 
-    for (int i = 0; i < mo_objects_count; i++) {
-        struct object_t* obj = mo_objects + i;
-        if (0 == strcmp(obj->name, name)) {
-            return obj->type;
+    for (int i = 0; i < mo_classes_count; i++) {
+        struct class_t* cls = mo_classes + i;
+        if (0 == strcmp(cls->name, name)) {
+            return cls->typeid;
         }
     }
 
-    struct object_t* obj = mo_objects + mo_objects_count;
-    obj->type = mo_objects_count;
-    strncpy(obj->name, sizeof(obj->name), name);
-    obj->del = del;
-    return obj->type;
+    struct class_t* cls = mo_classes + mo_classes_count;
+    cls->typeid = mo_classes_count;
+    strncpy(cls->name, sizeof(cls->name), name);
+    cls->del = del;
+    return cls->typeid;
 }
+
+MO_EXTERN   struct class_t*     mo_class_of(int typeid)
+{
+    if ((typeid < 0) || (typeid > mo_classes_count)) {
+        return NULL;
+    }
+
+    return mo_classes + typeid;
+}
+
+MO_EXTERN   int                 mo_typeid_of(char* name)
+{
+    for (int i = 0; i < mo_classes_count; i++) {
+        struct class_t* cls = mo_classes + i;
+        if (0 == strcmp(cls->name, name)) {
+            return cls->typeid;
+        }
+    }
+
+    return -1;
+}
+
 
 MO_EXTERN   struct result_t*    mo_result_clear(struct result_t* r)
 {
@@ -59,7 +94,7 @@ static   struct cache_t*     mo_cache_new(int cap, int rsrv)
     }
     
     c->prev = c;
-    c->type = mo_register_object("cache_t", free);
+    c->typeid = mo_define_class("cache_t", free);
     c->anchor = NULL;
     c->rsrv = rsrv;
     c->cap = cap;
@@ -83,12 +118,17 @@ MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, i
     }
 
     x->prev = x;
-    x->type = mo_register_object("lex_t", mo_lex_del);
+    x->typeid = mo_define_class("lex_t", mo_lex_del);
     x->ctx = ctx;
     x->next = next;
     x->cache = mo_cache_new(cap, rsrv);
     x->stream = NULL;
     return x;
+}
+
+MO_EXTERN   struct result_t*    mo_lex_next_token(struct lex_t* x, struct token_t* t, struct result_t* r)
+{
+    return x->next(x->ctx, x, t, r);
 }
 
 static void mo_sytx_del(void* y)
@@ -103,7 +143,7 @@ MO_EXTERN   struct sytx_t*      mo_sytx_new()
     }
 
     y->prev = y;
-    y->type = mo_register_object("sytx_t", mo_sytx_del);
+    y->typeid = mo_define_class("sytx_t", mo_sytx_del);
     y->unit = NULL;
 
     return y;
@@ -121,7 +161,7 @@ MO_EXTERN   struct unit_t*      mo_unit_new(void* ctx, MO_ACCEPT_CALLBACK accept
         return NULL;
     }
     u->prev = u;
-    u->type = mo_register_object("unit_t", mo_unit_del);
+    u->typeid = mo_define_class("unit_t", mo_unit_del);
     u->ctx = ctx;
     u->accept = accept;
     return u;
@@ -139,7 +179,7 @@ MO_EXTERN   struct stream_t*    mo_stream_new(void* ctx, MO_READ_CALLBACK   read
         return NULL;
     }
     s->prev = s;
-    s->type = mo_register_object("stream_t", mo_stream_del);
+    s->typeid = mo_define_class("stream_t", mo_stream_del);
     s->anchor.name = NULL;
     s->anchor.lino = 0;
     s->anchor.line = NULL;
@@ -161,7 +201,7 @@ MO_EXTERN struct token_t*  mo_token_new()
     }
 
     k->prev = k;
-    k->type = mo_register_object("token_t", mo_token_del);
+    k->typeid = mo_define_class("token_t", mo_token_del);
     k->size = sizeof(struct token_t);
     k->id = MO_TOKEN_UNKNOWN;
     k->opts = 0;
@@ -177,7 +217,7 @@ MO_EXTERN struct result_t*  mo_result_new()
     }
 
     r->prev = r;
-    r->type = mo_register_object("result_t", free);
+    r->typeid = mo_define_class("result_t", free);
     r->error = MO_OK;
     r->text[0] = '\0';
     return r;
@@ -191,7 +231,7 @@ static void mo_compile_del(void* p)
 MO_EXTERN   struct compile_t*   mo_compile_init(struct compile_t* p, struct lex_t* x, struct sytx_t* y)
 {
     p->prev = p;
-    p->type = mo_register_object("compile_t", mo_compile_del);
+    p->typeid = mo_define_class("compile_t", mo_compile_del);
     p->lex = x;
     p->sytx = y;
     p->token = mo_token_new();
