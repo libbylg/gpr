@@ -29,6 +29,7 @@ typedef int             mo_bool;
 typedef int             mo_errno;
 typedef unsigned int    mo_token;
 typedef int             mo_action;
+typedef unsigned char   mo_byte;
 
 
 #define MO_FALSE        (!!0)
@@ -104,7 +105,7 @@ struct class_t
 //  词法识别出来的符号
 struct token_t
 {
-    struct token_t*     prev;
+    void*               prev;
     int                 typeid;
     int                 size;       //  整个token所占的存储空间
     mo_token            id;         //  符号的类型编号
@@ -126,7 +127,7 @@ struct token_t
 //  词法和语法解析结果
 struct result_t
 {
-    struct result_t*    prev;
+    void*               prev;
     int                 typeid;
     int                 error;
     char                text[500];
@@ -136,7 +137,7 @@ struct result_t
 //  词法定位信息
 struct anchor_t
 {
-    struct result_t*    prev;   //  
+    void*               prev;   //  
     int                 typeid; //  
     char*               name;   //  名称
     int                 lino;   //  行号
@@ -155,7 +156,7 @@ struct cache_t
     char*               pos;        //  当前识别位置指针
     char*               end;        //  有效数据结束位置，*end永远是\n
     char*               limit;      //  缓冲区结尾
-    char                buf[0];     //  数据缓冲区
+    mo_byte             buf[0];     //  数据缓冲区
 };
 
 
@@ -234,16 +235,17 @@ MO_EXTERN   int                 mo_typeid_of            (char* name);
 MO_EXTERN   struct result_t*    mo_result_new           ();
 MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* r);
 MO_EXTERN   mo_bool             mo_result_ok            (struct result_t* r);
+MO_EXTERN   struct result_t*    mo_result_errorf        (struct result_t* r, int error, char* format, ...);
 
 MO_EXTERN   struct token_t*     mo_token_new            ();
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t*  k);
 
 //  词法识别的接口
-MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_READ_CALLBACK close);
+MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);
 MO_EXTERN   struct lex_t*       mo_lex_new              (void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
 MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
 MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
-MO_EXTERN   struct result_t*    mo_lex_next_token       (struct lex_t* x, struct token_t* t, struct result_t* r);
+MO_EXTERN   mo_token            mo_lex_next_token       (struct lex_t* x, struct token_t* t, struct result_t* r);
 
 //  语法识别的接口
 MO_EXTERN   struct unit_t*      mo_unit_new             (void* ctx, MO_ACCEPT_CALLBACK accept);
@@ -258,7 +260,7 @@ MO_EXTERN   void                mo_compile_clear        (struct compile_t* p);
 MO_EXTERN   void                mo_compile_drive        (struct compile_t* p);
 
 
-MO_EXTERN   struct stream_t*   mo_stream_file_new       (const char* filename);
+
 
 #endif//__mo_
 

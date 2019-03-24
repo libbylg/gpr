@@ -1,6 +1,7 @@
 #include "mo.h"
 
 #include "stdlib.h"
+#include "string.h"
 
 #define MO_CACHE_CAP_DEF    (1024)
 #define MO_CACHE_RSRV_DEF   (32)
@@ -18,7 +19,7 @@ MO_EXTERN   int                 mo_define_class(char* name, MO_DEL_CALLBACK del)
         struct class_t* cls = mo_classes + 0;
         cls->prev = cls;
         cls->typeid = 0;    //  指向自己
-        strcpy(cls->name, sizeof(cls->name), "class_t");
+        strncpy(cls->name, "class_t", sizeof(cls->name));
         cls->del = mo_class_del;
         mo_classes_count = 1;
     }
@@ -36,7 +37,7 @@ MO_EXTERN   int                 mo_define_class(char* name, MO_DEL_CALLBACK del)
 
     struct class_t* cls = mo_classes + mo_classes_count;
     cls->typeid = mo_classes_count;
-    strncpy(cls->name, sizeof(cls->name), name);
+    strncpy(cls->name, name, sizeof(cls->name));
     cls->del = del;
     return cls->typeid;
 }
@@ -126,7 +127,7 @@ MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, i
     return x;
 }
 
-MO_EXTERN   struct result_t*    mo_lex_next_token(struct lex_t* x, struct token_t* t, struct result_t* r)
+MO_EXTERN   mo_token    mo_lex_next_token(struct lex_t* x, struct token_t* t, struct result_t* r)
 {
     return x->next(x->ctx, x, t, r);
 }
@@ -172,7 +173,7 @@ MO_EXTERN   void                mo_stream_del(void* m)
 
 }
 
-MO_EXTERN   struct stream_t*    mo_stream_new(void* ctx, MO_READ_CALLBACK   read, MO_READ_CALLBACK close)
+MO_EXTERN   struct stream_t*    mo_stream_new(void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close)
 {
     struct stream_t* s = (struct stream_t*)malloc(sizeof(struct stream_t));
     if (NULL == s) {
@@ -220,6 +221,17 @@ MO_EXTERN struct result_t*  mo_result_new()
     r->typeid = mo_define_class("result_t", free);
     r->error = MO_OK;
     r->text[0] = '\0';
+    return r;
+}
+
+MO_EXTERN   struct result_t*    mo_result_errorf(struct result_t* r, int error, char* format, ...)
+{
+    r->error = error;
+    va_list va;
+    va_start(va, format);
+    _vsnprintf(r->text, format, va);
+    va_end(va);
+
     return r;
 }
 

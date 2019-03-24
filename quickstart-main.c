@@ -3,10 +3,27 @@
 #include <string.h>
 
 #include "mo.h"
+#include "mo_utils.h"
 
 
-static mo_token  demo_lex_next(void* ctx, struct compile_t*  p, struct token_t* t, struct result_t* r)
+
+
+
+
+
+
+static mo_token  demo_lex_next(void* ctx, struct lex_t* x, struct token_t* t, struct result_t* r)
 {
+    struct cache_t* cache = x->cache;
+    mo_byte* pc = cache->pos;
+    while (1) {
+        //  跳过空白和空行并确保当前位置为有效识别字符
+        pc = mo_lex_locate(x, r, pc);
+
+        switch (*pc) {
+            case ' ': case 
+        }
+    }
     return MO_TOKEN_UNKNOWN;
 }
 
