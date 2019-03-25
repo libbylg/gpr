@@ -420,7 +420,7 @@ MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struc
         if (*pc == escape_newline) {
             escape_open = MO_TRUE;
         } else {
-            escape_open = MO_FALSE;
+            escape_open = MO_FALSE; //  TODO 这种方法性能较差，每个字符都要重置一次
         }
         pc++;
     }
@@ -428,22 +428,84 @@ MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struc
 
 static mo_byte*            mo_lex_accept_number_hex(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
+    x->cache->pos = pc + 2; //  跳过0x前缀
+    while (mo_cm[*pc] & (CM_HEX)) {
+        pc++;
+    }
 
+    if (mo_cm[*pc] & (CM_ALPHA)) {
+        mo_result_errorf(r, 111, "");
+    }
+    
+    x->cache->pos = pc;
+    return x->cache->pos;
 }
 
 static mo_byte*            mo_lex_accept_number_dec(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
+    x->cache->pos = pc + 1; //  跳过已经识别过的数字前缀
+    while (mo_cm[*pc] & (CM_DEC)) {
+        pc++;
+    }
 
+    //  如果遇到浮点数关键字符
+    if (('.' == *pc) || ('e' == *pc) || ('E' == *pc)) {
+        return mo_lex_accept_number_float_postfix(x, k, r, pc);
+    }
+
+    if (mo_cm[*pc] & (CM_ALPHA)) {
+        mo_result_errorf(r, 111, "");
+    }
+    
+    x->cache->pos = pc;
+    return x->cache->pos;
 }
 
 static mo_byte*            mo_lex_accept_number_oct(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
+    x->cache->pos = pc + 1; //  跳过八进制的 0 前缀
+    while (mo_cm[*pc] & (CM_OCT)) {
+        pc++;
+    }
 
+    if (mo_cm[*pc] & (CM_ALPHA | CM_DEC)) {
+        mo_result_errorf(r, 111, "");
+    }
+    
+    x->cache->pos = pc;
+    return x->cache->pos;
 }
 
 static mo_byte*            mo_lex_accept_number_float_postfix(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
+    //  如果是小数部分
+    if ('.' == *pc) {
+        pc++;
+        while (mo_cm[*pc] & (CM_DEC)) {
+            pc++;
+        }
+    }
 
+    //  如果是指数部分
+    if (('e' == *pc) || ('E' == *pc)) {
+        pc++;
+        if (('+' == *pc) || ('-' == *pc)) {
+            pc++;
+        }
+        while (mo_cm[*pc] & (CM_DEC)) {
+            pc++;
+        }
+    }
+
+    //  浮点数后面如果是字母结束，是错误的，比如：12.car
+    if (mo_cm[*pc] & (CM_ALPHA)) {
+        mo_result_errorf(r, 111, "");
+        return x->cache->pos;
+    }
+
+    //  浮点数识别结束
+    x->cache->pos = pc;
+    return x->cache->pos;
 }
 
 MO_EXTERN   mo_byte*            mo_lex_accept_number(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
@@ -487,4 +549,113 @@ MO_EXTERN   mo_byte*            mo_lex_accept_number(struct lex_t* x, struct tok
     //  无法识别的符号
     mo_result_errorf(r, 111, "");
     return pc;
+}
+
+static mo_byte              mo_lex_accept_escape_char(struct lex_t* x, struct result_t* r, mo_byte** pc)
+{
+
+}
+
+
+static mo_byte*            mo_lex_accept_string(struct lex_t* x, struct token_t* t, struct result_t* r, mo_byte* pc)
+{
+    register char* pc;
+
+RETRY:
+    pc = x->cache->pos + prefix_len;
+    while (0 == (mo_cm[(int)*pc] & CM_STRING_FLAG)) {
+        pc++;
+    }
+
+    if ('\"' == *pc) {
+        pc++;
+        t->token = MO_TOKEN_STRING;
+        t->text[0] = x->cache->pc;
+        t->text[1] = pc;
+        x->cache->pos = pc;
+        return MO_TOKEN_STRING;
+    }
+
+    if (*pc == '\\') {
+        pc++;
+
+        switch (*pc) {
+            case '\\':
+            case '\"':
+            case 't':
+            case 'v':
+            case 'r':
+            case 'n':
+            case 'a':
+            case 'b':
+            case 'x':
+            case 'u':
+            case '\n':
+                if (pc >= x->cache->end) {
+                    prefix_len = ((pc - x->cache->pos) - 1);    ///<    由于碰到转义字符,所以实际识别出来的数据长度应该少一个字符
+                    int ret = mo_cache_load(cache);
+                    if (MO_READ_OK == ret) {
+                        goto RETRY; //  TODO bug
+                    }
+
+                    if (MO_READ_ERROR == ret) {
+                        //  转义字符数据识别失败
+                        mo_push_result(cache->mo, mo_result_new("lex", 111, "load cache failed"));
+                        return MO_TOKEN_ERROR;
+                    }
+
+                    if (MO_READ_EOF == ret) {
+                        //  字符串没有正确地结束
+                        mo_push_result(cache->mo, mo_result_new("lex", 111, "string do not end correctly"));
+                        return MO_TOKEN_ERROR;
+                    }
+
+                    //  不支持的返回码
+                    mo_push_result(cache->mo, mo_result_new("lex", 111, "unsupported returned value"));
+                    return MO_TOKEN_ERROR;
+                }
+
+
+                //  如果遇到真换行:字符串不允许跨行
+                mo_push_result(cache->mo, mo_result_new("lex", 111, "string should be closed brfore new line"));
+                return MO_TOKEN_ERROR;
+            default:
+                //  不支持的转义字符
+                mo_push_result(cache->mo, mo_result_new("lex", 111, "unrecogenized espace char"));
+                return MO_TOKEN_ERROR;
+        }
+    }
+
+    if (*pc == '\n') {
+        //  遇到的并不是真的换行符号
+        if (pc >= x->cache->end) {
+            int ret = mo_lex_load_more(x, t, r, pc);
+            if (MO_READ_OK == ret) {
+                goto RETRY;
+            }
+
+            if (MO_READ_ERROR == ret) {
+                mo_result_errorf(r, 111, "load cache failed");
+                return MO_TOKEN_ERROR;
+            }
+
+            //  MO_READ_EOF 这种情况直接结束当前处理
+            if (MO_READ_EOF == ret) {
+                mo_result_errorf(r, 111, "string do not end correctly"));
+                return MO_TOKEN_ERROR;
+            }
+
+            //  不支持的返回码
+            mo_result_errorf(r, 111, "unsupported returned value"));
+            return MO_TOKEN_ERROR;
+        }
+
+        //  如果遇到的就是真换行符号
+        mo_push_result(cache->mo, mo_result_new("lex", 111, "string do not end correctly"));
+        return MO_TOKEN_ERROR;
+    }
+
+    //  程序不应该走到这里
+    mo_push_result(cache->mo, mo_result_new("lex", 111, "inner-error:string"));
+    return MO_TOKEN_ERROR;
 }
