@@ -386,9 +386,43 @@ MO_EXTERN   mo_byte*            mo_lex_newline(struct lex_t* x, struct result_t*
 
 MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline)
 {
+    struct cache_t* cache = x->cache;
     pc = pc + pervsize;
-    while (1) {
-        if (*pc == escape_newline)
+    int escape_open = MO_FALSE;
+    while (mo_result_ok(r)) {
+        if (*pc == '\n') {
+            //  如果pc处的换行并不是真换行，而是缓冲区数据结束标记，那么尝试载入更多数据
+            if (pc == cache->end) {
+                pc = mo_lex_load_more(x, r, pc);
+                //  重新加载数据后，指针位置没有变化，说明没有更多数据了
+                if (pc == cache->end) {
+                    cache->pos = pc;
+                    return cache->pos;
+                }
+
+                //  如果已经载入了更多的数据，那么继续当前的识别操作
+                continue;
+            }
+
+            //  这里说明遇到了真换行，此时标记一下换行标记
+            mo_lex_newline(x, r, pc);
+
+            //  如果刚好遇到了换行符转义符号，那么注释变得可以跨行
+            if (MO_TRUE == escape_open) {
+                escape_open = MO_FALSE;
+                continue;
+            }
+
+            //  如果是个常规意义的换行，那么说明遇到了行尾，单行注释可以结束了
+            return cache->pos;
+        }
+
+        if (*pc == escape_newline) {
+            escape_open = MO_TRUE;
+        } else {
+            escape_open = MO_FALSE;
+        }
+        pc++;
     }
 }
 

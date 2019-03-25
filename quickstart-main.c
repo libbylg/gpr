@@ -23,7 +23,7 @@ static mo_token  demo_lex_next(void* ctx, struct lex_t* x, struct token_t* t, st
         switch (*pc) {
             case '\n':
                 if (pc == cache->end) { return MO_TOKEN_EOF; }
-                return mo_result_errorf(112, "");
+                return mo_result_errorf(r, 112, "");
 
         }
     }
