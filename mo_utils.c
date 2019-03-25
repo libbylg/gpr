@@ -4,11 +4,11 @@ enum
 {
     CM_DEC          =   0x0001,
     CM_HEX          =   0x0002,
-    CM_NEWLINE      =   0x0004,
-    CM_SPACE        =   0x0008,
-    CM_ALPHA        =   0x0010,
-    //CM_ALPHAx       =   0x0020,
-        CM_STRING_FLAG  =   0x0040,
+    CM_OCT          =   0x0004,
+    CM_NEWLINE      =   0x0008,
+    CM_SPACE        =   0x0010,
+    CM_ALPHA        =   0x0020,
+    CM_STRING_FLAG  =   0x0040,
     CM_COMMENT_FLAG =   0x0080,
 };
 
@@ -426,3 +426,65 @@ MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struc
     }
 }
 
+static mo_byte*            mo_lex_accept_number_hex(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+{
+
+}
+
+static mo_byte*            mo_lex_accept_number_dec(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+{
+
+}
+
+static mo_byte*            mo_lex_accept_number_oct(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+{
+
+}
+
+static mo_byte*            mo_lex_accept_number_float_postfix(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+{
+
+}
+
+MO_EXTERN   mo_byte*            mo_lex_accept_number(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+{
+    if ('0' == *pc) {
+        //  如果遇到十六进制前缀
+        if (('x' == pc[1]) || ('X' == pc[1])) {
+            return mo_lex_accept_number_hex(x, k, r, pc);
+        }
+
+        //  如果遇到的是8进制前缀
+        if (mo_cm[pc[1]] & (CM_OCT)) {
+            return mo_lex_accept_number_oct(x, k, r, pc);
+        }
+
+        //  如果遇到的上浮点识别符
+        if (('.' == pc[1]) || ('e' == pc[1]) || ('E' == pc[1])) {
+            return mo_lex_accept_number_float_postfix(x, k, r, pc);
+        }
+
+        //  如果遇到了字母，这种情况算作浮点数格式错误
+        if (mo_cm[pc[1]] & (CM_ALPHA)) {
+            mo_result_errorf(r, 111, "");
+            return pc;
+        }
+
+        //  全部排除后可以作为十进制数来识别：这种情况其实就只有个0
+        return mo_lex_accept_number_dec(x, k, r, pc);
+    }
+
+    //  如果起始字符就是十进制数字，那么当作十进制数字来识别
+    if (mo_cm[*pc] & (CM_DEC)) {
+        return mo_lex_accept_number_dec(x, k, r, pc);
+    }
+
+    //  如果遇到的是浮点数的点号前缀，那么当作浮点数来识别
+    if ('.' == *pc) {
+        return mo_lex_accept_number_float_postfix(x, k, r, pc);
+    }
+
+    //  无法识别的符号
+    mo_result_errorf(r, 111, "");
+    return pc;
+}
