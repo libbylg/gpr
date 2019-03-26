@@ -113,17 +113,29 @@ static   void   mo_lex_del(void* x)
 
 MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv)
 {
-    struct lex_t* x = (struct lex_t*)malloc(sizeof(struct lex_t));
+    int size = sizeof(struct lex_t) + cap + rsrv + 1;
+    struct lex_t* x = (struct lex_t*)malloc(size);
     if (NULL == x) {
         return NULL;;
     }
 
+    mo_byte* buf = (mo_byte*)malloc(size);
+    if (NULL == buf) {
+        return NULL;
+    }
     x->prev = x;
     x->typeid = mo_define_class("lex_t", mo_lex_del);
     x->ctx = ctx;
     x->next = next;
-    x->cache = mo_cache_new(cap, rsrv);
     x->stream = NULL;
+    
+    x->anchor = NULL;
+    x->rsrv = rsrv;
+    x->cap = cap;
+    x->pos = c->buf;
+    x->end = c->pos;
+    x->limit = c->buf + cap;
+    x->end[0] = '\n';
     return x;
 }
 

@@ -190,7 +190,7 @@ struct lex_t
     char*               pos;        //  当前识别位置指针
     char*               end;        //  有效数据结束位置，*end永远是\n
     char*               limit;      //  缓冲区结尾
-    mo_byte*            buf;     //  数据缓冲区
+    mo_byte             buf[0];     //  数据缓冲区
 
 };
 
