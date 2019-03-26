@@ -145,21 +145,6 @@ struct anchor_t
 };
 
 
-//  词法识别时，用到的cache
-struct cache_t
-{
-    void*               prev;       //  前一个cache对象
-    int                 typeid;
-    struct anchor_t*    anchor;     //  词法定位信息(直接引用自 stream 对象)
-    int                 rsrv;       //  预留大小
-    int                 cap;        //  数据缓冲区的总容量（总是等于：limit - buf）
-    char*               pos;        //  当前识别位置指针
-    char*               end;        //  有效数据结束位置，*end永远是\n
-    char*               limit;      //  缓冲区结尾
-    mo_byte             buf[0];     //  数据缓冲区
-};
-
-
 //  状态
 struct stats_t
 {
@@ -195,12 +180,18 @@ struct unit_t
 struct lex_t
 {
     void*               prev;       //  前一个词法对象
-    int                 typeid;       //  对象类型编号
+    int                 typeid;     //  对象类型编号
+    struct stream_t*    stream;     //  输入流
+    struct anchor_t*    anchor;     //  词法定位信息(直接引用自 stream 对象)
     void*               ctx;        //  词法上下文
     MO_NEXT_CALLBACK    next;       //  词法识别的函数
+    int                 rsrv;       //  预留大小
+    int                 cap;        //  数据缓冲区的总容量（总是等于：limit - buf）
+    char*               pos;        //  当前识别位置指针
+    char*               end;        //  有效数据结束位置，*end永远是\n
+    char*               limit;      //  缓冲区结尾
+    mo_byte*            buf;     //  数据缓冲区
 
-    struct cache_t*     cache;
-    struct stream_t*    stream;
 };
 
 
