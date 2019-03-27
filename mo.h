@@ -46,16 +46,16 @@ struct sytx_t;
 struct compile_t;
 
 
-//  ç”¨äºresult
+//  ÓÃÓÚresult
 #define MO_OK               (0)
 
 
 
-//  é‡Šæ”¾å¯¹è±¡çš„æ¥å£
+//  ÊÍ·Å¶ÔÏóµÄ½Ó¿Ú
 typedef     void        (*MO_DEL_CALLBACK   )(void* obj);
 
 
-//  è¯»å–æ•°æ®çš„è¿”å›å€¼å®šä¹‰
+//  ¶ÁÈ¡Êı¾İµÄ·µ»ØÖµ¶¨Òå
 #define MO_READ_OK      (0)
 #define MO_READ_EOF     (1)
 #define MO_READ_ERROR   (2)
@@ -63,22 +63,22 @@ typedef     int         (*MO_READ_CALLBACK  )(void* ctx, char** pos, char* end);
 typedef     void        (*MO_CLOSE_CALLBACK )(void* ctx);
 
 
-//  å‡ ä¸ªå†…å®šçš„è¯æ³•ç¼–å·
+//  ¼¸¸öÄÚ¶¨µÄ´Ê·¨±àºÅ
 #define     MO_TOKEN_UNKNOWN    (0x00000000)
 #define     MO_TOKEN_EOF        (0xFFFFFFFE)
 #define     MO_TOKEN_ERROR      (0xFFFFFFFF)
 typedef     mo_token    (*MO_NEXT_CALLBACK  )(void* ctx, struct lex_t*  p, struct token_t* t, struct result_t* r);
 
 
-//  è¯­æ³•åˆ†æåè¿”å›çš„å¯¹å½“å‰ token çš„å¤„ç†å»ºè®®
-#define     MO_ACTION_ERROR     (0)     ///<    é‡åˆ°é”™è¯¯
-#define     MO_ACTION_NEEDMORE  (1)     ///<    è¯»å–æ›´å¤šç¬¦å·
-#define     MO_ACTION_RETRY     (2)     ///<    é‡è¯•
-#define     MO_ACTION_COMPLETE  (3)     ///<    è¯†åˆ«å®Œæˆ
+//  Óï·¨·ÖÎöºó·µ»ØµÄ¶Ôµ±Ç° token µÄ´¦Àí½¨Òé
+#define     MO_ACTION_ERROR     (0)     ///<    Óöµ½´íÎó
+#define     MO_ACTION_NEEDMORE  (1)     ///<    ¶ÁÈ¡¸ü¶à·ûºÅ
+#define     MO_ACTION_RETRY     (2)     ///<    ÖØÊÔ
+#define     MO_ACTION_COMPLETE  (3)     ///<    Ê¶±ğÍê³É
 typedef     mo_action   (*MO_ACCEPT_CALLBACK)(void* ctx, struct sytx_t* y, struct token_t* t, struct result_t* r);
 
 
-//  è¯­æ³•é©±åŠ¨å™¨
+//  Óï·¨Çı¶¯Æ÷
 typedef     mo_errno    (*MO_DRIVE_CALLBACK )(void* ctx, struct compile_t* p);
 
 //#define MO_CLASS(t)             \
@@ -93,7 +93,7 @@ typedef     mo_errno    (*MO_DRIVE_CALLBACK )(void* ctx, struct compile_t* p);
 //    yyy
 //};
 
-//  ç±»
+//  Àà
 struct class_t
 {
     void*               prev;
@@ -102,29 +102,29 @@ struct class_t
     MO_DEL_CALLBACK     del;
 };
 
-//  è¯æ³•è¯†åˆ«å‡ºæ¥çš„ç¬¦å·
+//  ´Ê·¨Ê¶±ğ³öÀ´µÄ·ûºÅ
 struct token_t
 {
     void*               prev;
     int                 typeid;
-    int                 size;       //  æ•´ä¸ªtokenæ‰€å çš„å­˜å‚¨ç©ºé—´
-    mo_token            id;         //  ç¬¦å·çš„ç±»å‹ç¼–å·
-    int                 opts;       //  é€‰é¡¹
+    int                 size;       //  Õû¸ötokenËùÕ¼µÄ´æ´¢¿Õ¼ä
+    mo_token            id;         //  ·ûºÅµÄÀàĞÍ±àºÅ
+    int                 opts;       //  Ñ¡Ïî
     union 
     {
         struct 
         {
-            char        text[64];    //  ç¬¦å·çš„æ–‡æœ¬èŒƒå›´
+            char        text[64];    //  ·ûºÅµÄÎÄ±¾·¶Î§
         };
         struct 
         {
-            char*       ref[2];     //  ç¬¦å·çš„æ–‡æœ¬èŒƒå›´
+            char*       ref[2];     //  ·ûºÅµÄÎÄ±¾·¶Î§
         };
     };
 };
 
 
-//  è¯æ³•å’Œè¯­æ³•è§£æç»“æœ
+//  ´Ê·¨ºÍÓï·¨½âÎö½á¹û
 struct result_t
 {
     void*               prev;
@@ -134,76 +134,76 @@ struct result_t
 };
 
 
-//  è¯æ³•å®šä½ä¿¡æ¯
+//  ´Ê·¨¶¨Î»ĞÅÏ¢
 struct anchor_t
 {
     void*               prev;   //  
     int                 typeid; //  
-    char*               name;   //  åç§°
-    int                 lino;   //  è¡Œå·
-    char*               line;   //  è¡Œèµ·å§‹ä½ç½®ï¼ˆç”¨äºè®¡ç®—å½“å‰å¤„äºå½“å‰è¡Œçš„é‚£ä¸€åˆ—ï¼‰
+    char*               name;   //  Ãû³Æ
+    int                 lino;   //  ĞĞºÅ
+    char*               line;   //  ĞĞÆğÊ¼Î»ÖÃ£¨ÓÃÓÚ¼ÆËãµ±Ç°´¦ÓÚµ±Ç°ĞĞµÄÄÇÒ»ÁĞ£©
 };
 
 
-//  çŠ¶æ€
+//  ×´Ì¬
 struct stats_t
 {
-    void*               prev;       //  å‰ä¸€ä¸ªçŠ¶æ€
+    void*               prev;       //  Ç°Ò»¸ö×´Ì¬
     int                 typeid;
-    int                 state;      //  å½“å‰çš„çŠ¶æ€å€¼
+    int                 state;      //  µ±Ç°µÄ×´Ì¬Öµ
 };
 
 
-//  è¾“å…¥æµå¯¹è±¡
+//  ÊäÈëÁ÷¶ÔÏó
 struct stream_t
 {
-    void*               prev;   //  å‰ä¸€ä¸ªæµå¯¹è±¡
+    void*               prev;   //  Ç°Ò»¸öÁ÷¶ÔÏó
     int                 typeid;
-    struct anchor_t     anchor; //  è¯æ³•è¯†åˆ«çš„é”šç‚¹ä¿¡æ¯
-    void*               ctx;    //  æµå¯¹è±¡çš„ä¸Šä¸‹æ–‡
-    MO_CLOSE_CALLBACK   close;  //  æµå…³é—­å‡½æ•°
-    MO_READ_CALLBACK    read;   //  æµè¯»å–å‡½æ•°
+    struct anchor_t     anchor; //  ´Ê·¨Ê¶±ğµÄÃªµãĞÅÏ¢
+    void*               ctx;    //  Á÷¶ÔÏóµÄÉÏÏÂÎÄ
+    MO_CLOSE_CALLBACK   close;  //  Á÷¹Ø±Õº¯Êı
+    MO_READ_CALLBACK    read;   //  Á÷¶ÁÈ¡º¯Êı
 };
 
 
-//  è¯­æ³•åˆ†æå•å…ƒ
+//  Óï·¨·ÖÎöµ¥Ôª
 struct unit_t
 {
-    void*               prev;   //  å‰ä¸€ä¸ªè¯­æ³•å•å…ƒ
+    void*               prev;   //  Ç°Ò»¸öÓï·¨µ¥Ôª
     int                 typeid;
-    void*               ctx;    //  è¯æ³•ä¸Šä¸‹æ–‡
-    MO_ACCEPT_CALLBACK  accept; //  æ˜¯å¦æ¥æ”¶å½“å‰è¯æ³•å•å…ƒ
+    void*               ctx;    //  ´Ê·¨ÉÏÏÂÎÄ
+    MO_ACCEPT_CALLBACK  accept; //  ÊÇ·ñ½ÓÊÕµ±Ç°´Ê·¨µ¥Ôª
 };
 
 
-//  è¯æ³•åˆ†æå¯¹è±¡
+//  ´Ê·¨·ÖÎö¶ÔÏó
 struct lex_t
 {
-    void*               prev;       //  å‰ä¸€ä¸ªè¯æ³•å¯¹è±¡
-    int                 typeid;     //  å¯¹è±¡ç±»å‹ç¼–å·
-    struct stream_t*    stream;     //  è¾“å…¥æµ
-    struct anchor_t*    anchor;     //  è¯æ³•å®šä½ä¿¡æ¯(ç›´æ¥å¼•ç”¨è‡ª stream å¯¹è±¡)
-    void*               ctx;        //  è¯æ³•ä¸Šä¸‹æ–‡
-    MO_NEXT_CALLBACK    next;       //  è¯æ³•è¯†åˆ«çš„å‡½æ•°
-    int                 rsrv;       //  é¢„ç•™å¤§å°
-    int                 cap;        //  æ•°æ®ç¼“å†²åŒºçš„æ€»å®¹é‡ï¼ˆæ€»æ˜¯ç­‰äºï¼šlimit - bufï¼‰
-    char*               pos;        //  å½“å‰è¯†åˆ«ä½ç½®æŒ‡é’ˆ
-    char*               end;        //  æœ‰æ•ˆæ•°æ®ç»“æŸä½ç½®ï¼Œ*endæ°¸è¿œæ˜¯\n
-    char*               limit;      //  ç¼“å†²åŒºç»“å°¾
-    mo_byte             buf[0];     //  æ•°æ®ç¼“å†²åŒº
+    void*               prev;       //  Ç°Ò»¸ö´Ê·¨¶ÔÏó
+    int                 typeid;     //  ¶ÔÏóÀàĞÍ±àºÅ
+    struct stream_t*    stream;     //  ÊäÈëÁ÷
+    struct anchor_t*    anchor;     //  ´Ê·¨¶¨Î»ĞÅÏ¢(Ö±½ÓÒıÓÃ×Ô stream ¶ÔÏó)
+    void*               ctx;        //  ´Ê·¨ÉÏÏÂÎÄ
+    MO_NEXT_CALLBACK    next;       //  ´Ê·¨Ê¶±ğµÄº¯Êı
+    int                 rsrv;       //  Ô¤Áô´óĞ¡
+    int                 cap;        //  Êı¾İ»º³åÇøµÄ×ÜÈİÁ¿£¨×ÜÊÇµÈÓÚ£ºlimit - buf£©
+    char*               pos;        //  µ±Ç°Ê¶±ğÎ»ÖÃÖ¸Õë
+    char*               end;        //  ÓĞĞ§Êı¾İ½áÊøÎ»ÖÃ£¬*endÓÀÔ¶ÊÇ\n
+    char*               limit;      //  »º³åÇø½áÎ²
+    mo_byte             buf[0];     //  Êı¾İ»º³åÇø
 
 };
 
 
-//  è¯­æ³•åˆ†æå¯¹è±¡
+//  Óï·¨·ÖÎö¶ÔÏó
 struct sytx_t
 {
-    void*               prev;       //  å‰ä¸€ä¸ªè¯æ³•å¯¹è±¡
-    int                 typeid;       //  å¯¹è±¡ç±»å‹ç¼–å·
-    struct unit_t*      unit;       //  è¯­æ³•è¯†åˆ«å•å…ƒ
+    void*               prev;       //  Ç°Ò»¸ö´Ê·¨¶ÔÏó
+    int                 typeid;       //  ¶ÔÏóÀàĞÍ±àºÅ
+    struct unit_t*      unit;       //  Óï·¨Ê¶±ğµ¥Ôª
 };
 
-//  ç¼–è¯‘å™¨
+//  ±àÒëÆ÷
 struct compile_t
 {
     void*               prev;
@@ -215,14 +215,14 @@ struct compile_t
 };
 
 
-//  æ³¨å†Œç±»
+//  ×¢²áÀà
 MO_EXTERN   int                 mo_define_class         (char* name, MO_DEL_CALLBACK del);
 MO_EXTERN   struct class_t*     mo_class_of             (int typeid);
 MO_EXTERN   int                 mo_typeid_of            (char* name);
 
 
 
-//  åŸºç¡€å¯¹è±¡çš„æ¥å£
+//  »ù´¡¶ÔÏóµÄ½Ó¿Ú
 MO_EXTERN   struct result_t*    mo_result_new           ();
 MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* r);
 MO_EXTERN   mo_bool             mo_result_ok            (struct result_t* r);
@@ -231,21 +231,21 @@ MO_EXTERN   struct result_t*    mo_result_errorf        (struct result_t* r, int
 MO_EXTERN   struct token_t*     mo_token_new            ();
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t*  k);
 
-//  è¯æ³•è¯†åˆ«çš„æ¥å£
+//  ´Ê·¨Ê¶±ğµÄ½Ó¿Ú
 MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);
 MO_EXTERN   struct lex_t*       mo_lex_new              (void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
 MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
 MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
 MO_EXTERN   mo_token            mo_lex_next_token       (struct lex_t* x, struct token_t* t, struct result_t* r);
 
-//  è¯­æ³•è¯†åˆ«çš„æ¥å£
+//  Óï·¨Ê¶±ğµÄ½Ó¿Ú
 MO_EXTERN   struct unit_t*      mo_unit_new             (void* ctx, MO_ACCEPT_CALLBACK accept);
 MO_EXTERN   struct sytx_t*      mo_sytx_new             ();
 MO_EXTERN   void                mo_sytx_push_unit       (struct sytx_t* y, struct unit_t*   u);
 MO_EXTERN   struct unit_t*      mo_sytx_top_unit        (struct sytx_t* y);
 MO_EXTERN   struct result_t*    mo_sytx_accept_token    (struct sytx_t* y, struct token_t* t, struct result_t* r);
 
-//  ç¼–è¯‘å™¨æ¥å£
+//  ±àÒëÆ÷½Ó¿Ú
 MO_EXTERN   struct compile_t*   mo_compile_init         (struct compile_t* p, struct lex_t* x, struct sytx_t* y);
 MO_EXTERN   void                mo_compile_clear        (struct compile_t* p);
 MO_EXTERN   void                mo_compile_drive        (struct compile_t* p);

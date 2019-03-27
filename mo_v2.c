@@ -1,7 +1,9 @@
 #include "mo.h"
 
-#include "stdlib.h"
-#include "string.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
 
 #define MO_CACHE_CAP_DEF    (1024)
 #define MO_CACHE_RSRV_DEF   (32)
@@ -78,33 +80,33 @@ MO_EXTERN   mo_bool             mo_result_ok(struct result_t* r)
 
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t*  k);
 
-static   struct cache_t*     mo_cache_new(int cap, int rsrv)
-{
-    if (cap <= MO_CACHE_CAP_DEF) {
-        cap = MO_CACHE_CAP_DEF;
-    }
-
-    if (rsrv <= MO_CACHE_RSRV_DEF) {
-        rsrv = MO_CACHE_RSRV_DEF;
-    }
-
-    int size = sizeof(struct cache_t) + cap + rsrv + 1;
-    struct cache_t* c = (struct cache_t*)malloc(size);
-    if (NULL == c) {
-        return NULL;
-    }
-    
-    c->prev = c;
-    c->typeid = mo_define_class("cache_t", free);
-    c->anchor = NULL;
-    c->rsrv = rsrv;
-    c->cap = cap;
-    c->pos = c->buf;
-    c->end = c->pos;
-    c->limit = c->buf + cap;
-    c->end[0] = '\n';
-    return c;
-}
+//static   struct cache_t*     mo_cache_new(int cap, int rsrv)
+//{
+//    if (cap <= MO_CACHE_CAP_DEF) {
+//        cap = MO_CACHE_CAP_DEF;
+//    }
+//
+//    if (rsrv <= MO_CACHE_RSRV_DEF) {
+//        rsrv = MO_CACHE_RSRV_DEF;
+//    }
+//
+//    int size = sizeof(struct cache_t) + cap + rsrv + 1;
+//    struct cache_t* c = (struct cache_t*)malloc(size);
+//    if (NULL == c) {
+//        return NULL;
+//    }
+//    
+//    c->prev = c;
+//    c->typeid = mo_define_class("cache_t", free);
+//    c->anchor = NULL;
+//    c->rsrv = rsrv;
+//    c->cap = cap;
+//    c->pos = c->buf;
+//    c->end = c->pos;
+//    c->limit = c->buf + cap;
+//    c->end[0] = '\n';
+//    return c;
+//}
 
 static   void   mo_lex_del(void* x)
 {
@@ -132,9 +134,9 @@ MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, i
     x->anchor = NULL;
     x->rsrv = rsrv;
     x->cap = cap;
-    x->pos = c->buf;
-    x->end = c->pos;
-    x->limit = c->buf + cap;
+    x->pos = x->buf;
+    x->end = x->pos;
+    x->limit = x->buf + cap;
     x->end[0] = '\n';
     return x;
 }
@@ -241,7 +243,7 @@ MO_EXTERN   struct result_t*    mo_result_errorf(struct result_t* r, int error, 
     r->error = error;
     va_list va;
     va_start(va, format);
-    _vsnprintf(r->text, format, va);
+    _vsnprintf(r->text, sizeof(r->text), format, va);
     va_end(va);
 
     return r;
@@ -269,7 +271,7 @@ MO_EXTERN   void                mo_lex_push_stream(struct lex_t* x, struct strea
 {
     m->prev = x->stream;
     x->stream = m;
-    x->cache->anchor = &(x->stream->anchor);
+    x->anchor = &(x->stream->anchor);
     return;
 }
 
@@ -278,7 +280,7 @@ MO_EXTERN   struct stream_t*    mo_lex_pop_stream(struct lex_t* x)
 {
     struct stream_t* top = x->stream;
     x->stream = x->stream->prev;
-    x->cache->anchor = &(x->stream->anchor);
+    x->anchor = &(x->stream->anchor);
     return top;
 }
 
