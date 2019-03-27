@@ -16,7 +16,7 @@ MO_EXTERN   mo_byte*            mo_lex_locate       (struct lex_t* x, struct res
 MO_EXTERN   mo_byte*            mo_lex_newline      (struct lex_t* x, struct result_t* r, mo_byte* pc);
 
 //  单行注释
-MO_EXTERN   mo_byte*            mo_lex_singleline_comment   (struct lex_t* x, struct result_t* r, mo_byte* pc, int pervsize);
+MO_EXTERN   mo_byte*            mo_lex_singleline_comment   (struct lex_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline);
 
 //  从本地文件,字符串创建流对象
 MO_EXTERN   struct stream_t*    mo_stream_file_new  (const char* filename);

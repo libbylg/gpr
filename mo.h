@@ -233,22 +233,18 @@ MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t*  k);
 
 //  词法识别的接口
 MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);
-MO_EXTERN   struct lex_t*       mo_lex_new              (void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
+MO_EXTERN   struct lex_t*       mo_lex_init             (struct lex_t* x, void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
 MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
 MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
 MO_EXTERN   mo_token            mo_lex_next_token       (struct lex_t* x, struct token_t* t, struct result_t* r);
 
 //  语法识别的接口
-MO_EXTERN   struct unit_t*      mo_unit_new             (void* ctx, MO_ACCEPT_CALLBACK accept);
-MO_EXTERN   struct sytx_t*      mo_sytx_new             ();
-MO_EXTERN   void                mo_sytx_push_unit       (struct sytx_t* y, struct unit_t*   u);
+MO_EXTERN   struct unit_t*      mo_unit_new             (struct unit_t* u, void* ctx, MO_ACCEPT_CALLBACK accept);
+MO_EXTERN   struct sytx_t*      mo_sytx_init            (struct sytx_t* y, struct lex_t* x);
+MO_EXTERN   void                mo_sytx_push_unit       (struct sytx_t* y, struct unit_t* u);
 MO_EXTERN   struct unit_t*      mo_sytx_top_unit        (struct sytx_t* y);
-MO_EXTERN   struct result_t*    mo_sytx_accept_token    (struct sytx_t* y, struct token_t* t, struct result_t* r);
+MO_EXTERN   void                mo_sytx_drive           (struct sytx_t* y);
 
-//  编译器接口
-MO_EXTERN   struct compile_t*   mo_compile_init         (struct compile_t* p, struct lex_t* x, struct sytx_t* y);
-MO_EXTERN   void                mo_compile_clear        (struct compile_t* p);
-MO_EXTERN   void                mo_compile_drive        (struct compile_t* p);
 
 
 
