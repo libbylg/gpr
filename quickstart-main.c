@@ -14,15 +14,14 @@
 
 static mo_token  demo_lex_next(void* ctx, struct lex_t* x, struct token_t* t, struct result_t* r)
 {
-    struct cache_t* cache = x->cache;
-    mo_byte* pc = cache->pos;
+    mo_byte* pc = x->pos;
     while (1) {
         //  跳过空白和空行并确保当前位置为有效识别字符
         pc = mo_lex_locate(x, r, pc);
 
         switch (*pc) {
             case '\n':
-                if (pc == cache->end) { return MO_TOKEN_EOF; }
+                if (pc == x->end) { return MO_TOKEN_EOF; }
                 return mo_result_errorf(r, 112, "");
 
         }
