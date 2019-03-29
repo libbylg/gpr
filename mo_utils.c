@@ -288,7 +288,7 @@ MO_EXTERN mo_byte* mo_lex_skipspace(struct lex_t*  x, mo_byte* pc)
 
 MO_EXTERN mo_byte* mo_lex_load_more(struct lex_t* x, struct result_t* r, mo_byte* pc)
 {
-    struct cache_t* cache = x;
+    struct lex_t* cache = x;
 
     //  先保存下pos的位置
     x->pos = pc;
@@ -332,7 +332,7 @@ RETRY:
 //  定位到第一个非注释非空白处
 static mo_byte* mo_lex_locate(struct lex_t* x, struct result_t* r, mo_byte* pc)
 {
-    register struct cache_t*    cache;
+    register struct lex_t*    cache;
 
 RETRY:
     cache = x;
@@ -386,7 +386,7 @@ MO_EXTERN   mo_byte*            mo_lex_newline(struct lex_t* x, struct result_t*
 
 MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline)
 {
-    struct cache_t* cache = x;
+    struct lex_t* cache = x;
     pc = pc + pervsize;
     int escape_open = MO_FALSE;
     while (mo_result_ok(r)) {
@@ -559,8 +559,6 @@ static mo_byte              mo_lex_accept_escape_char(struct lex_t* x, struct re
 
 static mo_byte*            mo_lex_accept_string(struct lex_t* x, struct token_t* t, struct result_t* r, mo_byte* pc)
 {
-    register char* pc;
-
 RETRY:
     pc = x->pos + prefix_len;
     while (0 == (mo_cm[(int)*pc] & CM_STRING_FLAG)) {

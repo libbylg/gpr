@@ -80,43 +80,16 @@ MO_EXTERN   mo_bool             mo_result_ok(struct result_t* r)
 
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t*  k);
 
-//static   struct cache_t*     mo_cache_new(int cap, int rsrv)
-//{
-//    if (cap <= MO_CACHE_CAP_DEF) {
-//        cap = MO_CACHE_CAP_DEF;
-//    }
-//
-//    if (rsrv <= MO_CACHE_RSRV_DEF) {
-//        rsrv = MO_CACHE_RSRV_DEF;
-//    }
-//
-//    int size = sizeof(struct cache_t) + cap + rsrv + 1;
-//    struct cache_t* c = (struct cache_t*)malloc(size);
-//    if (NULL == c) {
-//        return NULL;
-//    }
-//    
-//    c->prev = c;
-//    c->typeid = mo_define_class("cache_t", free);
-//    c->anchor = NULL;
-//    c->rsrv = rsrv;
-//    c->cap = cap;
-//    c->pos = c->buf;
-//    c->end = c->pos;
-//    c->limit = c->buf + cap;
-//    c->end[0] = '\n';
-//    return c;
-//}
 
 static   void   mo_lex_del(void* x)
 {
     //  TODO
 }
 
-MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv)
+MO_EXTERN   struct cache_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv)
 {
-    int size = sizeof(struct lex_t) + cap + rsrv + 1;
-    struct lex_t* x = (struct lex_t*)malloc(size);
+    int size = sizeof(struct cache_t) + cap + rsrv + 1;
+    struct cache_t* x = (struct cache_t*)malloc(size);
     if (NULL == x) {
         return NULL;;
     }
@@ -126,7 +99,7 @@ MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, i
         return NULL;
     }
     x->prev = x;
-    x->typeid = mo_define_class("lex_t", mo_lex_del);
+    x->typeid = mo_define_class("cache_t", mo_lex_del);
     x->ctx = ctx;
     x->next = next;
     x->stream = NULL;
@@ -141,7 +114,7 @@ MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, i
     return x;
 }
 
-MO_EXTERN   mo_token    mo_lex_next_token(struct lex_t* x, struct token_t* t, struct result_t* r)
+MO_EXTERN   mo_token    mo_lex_next_token(struct cache_t* x, struct token_t* t, struct result_t* r)
 {
     return x->next(x->ctx, x, t, r);
 }
@@ -254,7 +227,7 @@ static void mo_compile_del(void* p)
 
 }
 
-MO_EXTERN   struct compile_t*   mo_compile_init(struct compile_t* p, struct lex_t* x, struct sytx_t* y)
+MO_EXTERN   struct compile_t*   mo_compile_init(struct compile_t* p, struct cache_t* x, struct sytx_t* y)
 {
     p->prev = p;
     p->typeid = mo_define_class("compile_t", mo_compile_del);
@@ -267,7 +240,7 @@ MO_EXTERN   struct compile_t*   mo_compile_init(struct compile_t* p, struct lex_
 
 MO_EXTERN   void                mo_compile_clear        (struct compile_t* p);
 
-MO_EXTERN   void                mo_lex_push_stream(struct lex_t* x, struct stream_t* m)
+MO_EXTERN   void                mo_lex_push_stream(struct cache_t* x, struct stream_t* m)
 {
     m->prev = x->stream;
     x->stream = m;
@@ -276,7 +249,7 @@ MO_EXTERN   void                mo_lex_push_stream(struct lex_t* x, struct strea
 }
 
 
-MO_EXTERN   struct stream_t*    mo_lex_pop_stream(struct lex_t* x)
+MO_EXTERN   struct stream_t*    mo_lex_pop_stream(struct cache_t* x)
 {
     struct stream_t* top = x->stream;
     x->stream = x->stream->prev;

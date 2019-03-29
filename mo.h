@@ -40,7 +40,6 @@ struct result_t;
 struct token_t;
 struct unit_t;
 struct stream_t;
-struct cache_t;
 struct lex_t;
 struct sytx_t;
 struct compile_t;
@@ -191,7 +190,6 @@ struct lex_t
     char*               end;        //  有效数据结束位置，*end永远是\n
     char*               limit;      //  缓冲区结尾
     mo_byte             buf[0];     //  数据缓冲区
-
 };
 
 
@@ -236,7 +234,6 @@ MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALL
 MO_EXTERN   struct lex_t*       mo_lex_init             (struct lex_t* x, void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
 MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
 MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
-MO_EXTERN   mo_token            mo_lex_next_token       (struct lex_t* x, struct token_t* t, struct result_t* r);
 
 //  语法识别的接口
 MO_EXTERN   struct unit_t*      mo_unit_new             (struct unit_t* u, void* ctx, MO_ACCEPT_CALLBACK accept);
