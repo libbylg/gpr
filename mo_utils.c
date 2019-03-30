@@ -1,18 +1,7 @@
 #include "mo_utils.h"
 
-enum
-{
-    CM_DEC          =   0x0001,
-    CM_HEX          =   0x0002,
-    CM_OCT          =   0x0004,
-    CM_NEWLINE      =   0x0008,
-    CM_SPACE        =   0x0010,
-    CM_ALPHA        =   0x0020,
-    CM_STRING_FLAG  =   0x0040,
-    CM_COMMENT_FLAG =   0x0080,
-};
 
-static unsigned short mo_cm[256] =
+static mo_cm mo_cms[256] =
 {
 /*  0x00    ???    0    */  0,
 /*  0x01    ???    1    */  0,
@@ -23,9 +12,9 @@ static unsigned short mo_cm[256] =
 /*  0x06    ???    6    */  0,
 /*  0x07    ???    7    */  0,
 /*  0x08    ???    8    */  0,
-/*  0x09    HT     9    */  CM_SPACE,
-/*  0x0A    ???   10    */  CM_NEWLINE | CM_STRING_FLAG | CM_COMMENT_FLAG,
-/*  0x0B    VT    11    */  CM_SPACE,
+/*  0x09    HT     9    */  MO_CM_SPACE,
+/*  0x0A    ???   10    */  MO_CM_NEWLINE | MO_CM_STRING_FLAG | MO_CM_COMMENT_FLAG,
+/*  0x0B    VT    11    */  MO_CM_SPACE,
 /*  0x0C    ???   12    */  0,
 /*  0x0D    ???   13    */  0,
 /*  0x0E    ???   14    */  0,
@@ -48,7 +37,7 @@ static unsigned short mo_cm[256] =
 /*  0x1F    ???   31    */  0,
 /*  0x20          32    */  0,
 /*  0x21    !     33    */  0,
-/*  0x22    "     34    */  CM_STRING_FLAG,
+/*  0x22    "     34    */  MO_CM_STRING_FLAG,
 /*  0x23    #     35    */  0,
 /*  0x24    $     36    */  0,
 /*  0x25    %     37    */  0,
@@ -56,22 +45,22 @@ static unsigned short mo_cm[256] =
 /*  0x27    '     39    */  0,
 /*  0x28    (     40    */  0,
 /*  0x29    )     41    */  0,
-/*  0x2A    *     42    */  CM_COMMENT_FLAG,
+/*  0x2A    *     42    */  MO_CM_COMMENT_FLAG,
 /*  0x2B    +     43    */  0,
 /*  0x2C    ,     44    */  0,
 /*  0x2D    -     45    */  0,
 /*  0x2E    .     46    */  0,
 /*  0x2F    /     47    */  0,
-/*  0x30    0     48    */  CM_DEC,
-/*  0x31    1     49    */  CM_DEC,
-/*  0x32    2     50    */  CM_DEC,
-/*  0x33    3     51    */  CM_DEC,
-/*  0x34    4     52    */  CM_DEC,
-/*  0x35    5     53    */  CM_DEC,
-/*  0x36    6     54    */  CM_DEC,
-/*  0x37    7     55    */  CM_DEC,
-/*  0x38    8     56    */  CM_DEC,
-/*  0x39    9     57    */  CM_DEC,
+/*  0x30    0     48    */  MO_CM_DEC,
+/*  0x31    1     49    */  MO_CM_DEC,
+/*  0x32    2     50    */  MO_CM_DEC,
+/*  0x33    3     51    */  MO_CM_DEC,
+/*  0x34    4     52    */  MO_CM_DEC,
+/*  0x35    5     53    */  MO_CM_DEC,
+/*  0x36    6     54    */  MO_CM_DEC,
+/*  0x37    7     55    */  MO_CM_DEC,
+/*  0x38    8     56    */  MO_CM_DEC,
+/*  0x39    9     57    */  MO_CM_DEC,
 /*  0x3A    :     58    */  0,
 /*  0x3B    ;     59    */  0,
 /*  0x3C    <     60    */  0,
@@ -79,64 +68,64 @@ static unsigned short mo_cm[256] =
 /*  0x3E    >     62    */  0,
 /*  0x3F    ?     63    */  0,
 /*  0x40    @     64    */  0,
-/*  0x41    A     65    */  CM_ALPHA | CM_HEX,
-/*  0x42    B     66    */  CM_ALPHA | CM_HEX,
-/*  0x43    C     67    */  CM_ALPHA | CM_HEX,
-/*  0x44    D     68    */  CM_ALPHA | CM_HEX,
-/*  0x45    E     69    */  CM_ALPHA | CM_HEX,
-/*  0x46    F     70    */  CM_ALPHA | CM_HEX,
-/*  0x47    G     71    */  CM_ALPHA,
-/*  0x48    H     72    */  CM_ALPHA,
-/*  0x49    I     73    */  CM_ALPHA,
-/*  0x4A    J     74    */  CM_ALPHA,
-/*  0x4B    K     75    */  CM_ALPHA,
-/*  0x4C    L     76    */  CM_ALPHA,
-/*  0x4D    M     77    */  CM_ALPHA,
-/*  0x4E    N     78    */  CM_ALPHA,
-/*  0x4F    O     79    */  CM_ALPHA,
-/*  0x50    P     80    */  CM_ALPHA,
-/*  0x51    Q     81    */  CM_ALPHA,
-/*  0x52    R     82    */  CM_ALPHA,
-/*  0x53    S     83    */  CM_ALPHA,
-/*  0x54    T     84    */  CM_ALPHA,
-/*  0x55    U     85    */  CM_ALPHA,
-/*  0x56    V     86    */  CM_ALPHA,
-/*  0x57    W     87    */  CM_ALPHA,
-/*  0x58    X     88    */  CM_ALPHA,
-/*  0x59    Y     89    */  CM_ALPHA,
-/*  0x5A    Z     90    */  CM_ALPHA,
+/*  0x41    A     65    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x42    B     66    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x43    C     67    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x44    D     68    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x45    E     69    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x46    F     70    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x47    G     71    */  MO_CM_ALPHA,
+/*  0x48    H     72    */  MO_CM_ALPHA,
+/*  0x49    I     73    */  MO_CM_ALPHA,
+/*  0x4A    J     74    */  MO_CM_ALPHA,
+/*  0x4B    K     75    */  MO_CM_ALPHA,
+/*  0x4C    L     76    */  MO_CM_ALPHA,
+/*  0x4D    M     77    */  MO_CM_ALPHA,
+/*  0x4E    N     78    */  MO_CM_ALPHA,
+/*  0x4F    O     79    */  MO_CM_ALPHA,
+/*  0x50    P     80    */  MO_CM_ALPHA,
+/*  0x51    Q     81    */  MO_CM_ALPHA,
+/*  0x52    R     82    */  MO_CM_ALPHA,
+/*  0x53    S     83    */  MO_CM_ALPHA,
+/*  0x54    T     84    */  MO_CM_ALPHA,
+/*  0x55    U     85    */  MO_CM_ALPHA,
+/*  0x56    V     86    */  MO_CM_ALPHA,
+/*  0x57    W     87    */  MO_CM_ALPHA,
+/*  0x58    X     88    */  MO_CM_ALPHA,
+/*  0x59    Y     89    */  MO_CM_ALPHA,
+/*  0x5A    Z     90    */  MO_CM_ALPHA,
 /*  0x5B    [     91    */  0,
-/*  0x5C    \     92    */  CM_STRING_FLAG,
+/*  0x5C    \     92    */  MO_CM_STRING_FLAG,
 /*  0x5D    ]     93    */  0,
 /*  0x5E    ^     94    */  0,
-/*  0x5F    _     95    */  CM_ALPHA,
+/*  0x5F    _     95    */  MO_CM_ALPHA,
 /*  0x60    `     96    */  0,
-/*  0x61    a     97    */  CM_ALPHA | CM_HEX,
-/*  0x62    b     98    */  CM_ALPHA | CM_HEX,
-/*  0x63    c     99    */  CM_ALPHA | CM_HEX,
-/*  0x64    d    100    */  CM_ALPHA | CM_HEX,
-/*  0x65    e    101    */  CM_ALPHA | CM_HEX,
-/*  0x66    f    102    */  CM_ALPHA | CM_HEX,
-/*  0x67    g    103    */  CM_ALPHA,
-/*  0x68    h    104    */  CM_ALPHA,
-/*  0x69    i    105    */  CM_ALPHA,
-/*  0x6A    j    106    */  CM_ALPHA,
-/*  0x6B    k    107    */  CM_ALPHA,
-/*  0x6C    l    108    */  CM_ALPHA,
-/*  0x6D    m    109    */  CM_ALPHA,
-/*  0x6E    n    110    */  CM_ALPHA,
-/*  0x6F    o    111    */  CM_ALPHA,
-/*  0x70    p    112    */  CM_ALPHA,
-/*  0x71    q    113    */  CM_ALPHA,
-/*  0x72    r    114    */  CM_ALPHA,
-/*  0x73    s    115    */  CM_ALPHA,
-/*  0x74    t    116    */  CM_ALPHA,
-/*  0x75    u    117    */  CM_ALPHA,
-/*  0x76    v    118    */  CM_ALPHA,
-/*  0x77    w    119    */  CM_ALPHA,
-/*  0x78    x    120    */  CM_ALPHA,
-/*  0x79    y    121    */  CM_ALPHA,
-/*  0x7A    z    122    */  CM_ALPHA,
+/*  0x61    a     97    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x62    b     98    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x63    c     99    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x64    d    100    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x65    e    101    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x66    f    102    */  MO_CM_ALPHA | MO_CM_HEX,
+/*  0x67    g    103    */  MO_CM_ALPHA,
+/*  0x68    h    104    */  MO_CM_ALPHA,
+/*  0x69    i    105    */  MO_CM_ALPHA,
+/*  0x6A    j    106    */  MO_CM_ALPHA,
+/*  0x6B    k    107    */  MO_CM_ALPHA,
+/*  0x6C    l    108    */  MO_CM_ALPHA,
+/*  0x6D    m    109    */  MO_CM_ALPHA,
+/*  0x6E    n    110    */  MO_CM_ALPHA,
+/*  0x6F    o    111    */  MO_CM_ALPHA,
+/*  0x70    p    112    */  MO_CM_ALPHA,
+/*  0x71    q    113    */  MO_CM_ALPHA,
+/*  0x72    r    114    */  MO_CM_ALPHA,
+/*  0x73    s    115    */  MO_CM_ALPHA,
+/*  0x74    t    116    */  MO_CM_ALPHA,
+/*  0x75    u    117    */  MO_CM_ALPHA,
+/*  0x76    v    118    */  MO_CM_ALPHA,
+/*  0x77    w    119    */  MO_CM_ALPHA,
+/*  0x78    x    120    */  MO_CM_ALPHA,
+/*  0x79    y    121    */  MO_CM_ALPHA,
+/*  0x7A    z    122    */  MO_CM_ALPHA,
 /*  0x7B    {    123    */  0,
 /*  0x7C    |    124    */  0,
 /*  0x7D    }    125    */  0,
@@ -273,11 +262,11 @@ static unsigned short mo_cm[256] =
 };
 
 
-MO_EXTERN mo_byte* mo_lex_skipspace(struct cache_t*  x, mo_byte* pc)
+MO_EXTERN mo_byte* mo_lex_skipspace(struct lex_t*  x, mo_byte* pc)
 {
     ///!    跳过所有的空白
     x->pos = pc;
-    while (mo_cm[(int)*pc] & CM_SPACE) {
+    while (mo_cms[(int)*pc] & MO_CM_SPACE) {
         pc++;
     }
 
@@ -286,9 +275,9 @@ MO_EXTERN mo_byte* mo_lex_skipspace(struct cache_t*  x, mo_byte* pc)
 }
 
 
-MO_EXTERN mo_byte* mo_lex_load_more(struct cache_t* x, struct result_t* r, mo_byte* pc)
+MO_EXTERN mo_byte* mo_lex_load_more(struct lex_t* x, struct result_t* r, mo_byte* pc)
 {
-    struct cache_t* cache = x;
+    struct lex_t* cache = x;
 
     //  先保存下pos的位置
     x->pos = pc;
@@ -330,9 +319,9 @@ RETRY:
 }
 
 //  定位到第一个非注释非空白处
-static mo_byte* mo_lex_locate(struct cache_t* x, struct result_t* r, mo_byte* pc)
+static mo_byte* mo_lex_locate(struct lex_t* x, struct result_t* r, mo_byte* pc)
 {
-    register struct cache_t*    cache;
+    register struct lex_t*    cache;
 
 RETRY:
     cache = x;
@@ -376,7 +365,7 @@ RETRY:
 }
 
 
-MO_EXTERN   mo_byte*            mo_lex_newline(struct cache_t* x, struct result_t* r, mo_byte* pc)
+MO_EXTERN   mo_byte*            mo_lex_newline(struct lex_t* x, struct result_t* r, mo_byte* pc)
 {
     x->anchor->lino++;  ///<    进入下一行
     x->anchor->line = pc + 1;
@@ -384,9 +373,9 @@ MO_EXTERN   mo_byte*            mo_lex_newline(struct cache_t* x, struct result_
     return x->pos;
 }
 
-MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct cache_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline)
+MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline)
 {
-    struct cache_t* cache = x;
+    struct lex_t* cache = x;
     pc = pc + pervsize;
     int escape_open = MO_FALSE;
     while (mo_result_ok(r)) {
@@ -426,14 +415,14 @@ MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct cache_t* x, str
     }
 }
 
-static mo_byte*            mo_lex_accept_number_hex(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_number_hex(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     x->pos = pc + 2; //  跳过0x前缀
-    while (mo_cm[*pc] & (CM_HEX)) {
+    while (mo_cms[*pc] & (MO_CM_HEX)) {
         pc++;
     }
 
-    if (mo_cm[*pc] & (CM_ALPHA)) {
+    if (mo_cms[*pc] & (MO_CM_ALPHA)) {
         mo_result_errorf(r, 111, "");
     }
     
@@ -441,10 +430,10 @@ static mo_byte*            mo_lex_accept_number_hex(struct cache_t* x, struct to
     return x->pos;
 }
 
-static mo_byte*            mo_lex_accept_number_dec(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_number_dec(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     x->pos = pc + 1; //  跳过已经识别过的数字前缀
-    while (mo_cm[*pc] & (CM_DEC)) {
+    while (mo_cms[*pc] & (MO_CM_DEC)) {
         pc++;
     }
 
@@ -453,7 +442,7 @@ static mo_byte*            mo_lex_accept_number_dec(struct cache_t* x, struct to
         return mo_lex_accept_number_float_postfix(x, k, r, pc);
     }
 
-    if (mo_cm[*pc] & (CM_ALPHA)) {
+    if (mo_cms[*pc] & (MO_CM_ALPHA)) {
         mo_result_errorf(r, 111, "");
     }
     
@@ -461,14 +450,14 @@ static mo_byte*            mo_lex_accept_number_dec(struct cache_t* x, struct to
     return x->pos;
 }
 
-static mo_byte*            mo_lex_accept_number_oct(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_number_oct(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     x->pos = pc + 1; //  跳过八进制的 0 前缀
-    while (mo_cm[*pc] & (CM_OCT)) {
+    while (mo_cms[*pc] & (MO_CM_OCT)) {
         pc++;
     }
 
-    if (mo_cm[*pc] & (CM_ALPHA | CM_DEC)) {
+    if (mo_cms[*pc] & (MO_CM_ALPHA | MO_CM_DEC)) {
         mo_result_errorf(r, 111, "");
     }
     
@@ -476,12 +465,12 @@ static mo_byte*            mo_lex_accept_number_oct(struct cache_t* x, struct to
     return x->pos;
 }
 
-static mo_byte*            mo_lex_accept_number_float_postfix(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_number_float_postfix(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     //  如果是小数部分
     if ('.' == *pc) {
         pc++;
-        while (mo_cm[*pc] & (CM_DEC)) {
+        while (mo_cms[*pc] & (MO_CM_DEC)) {
             pc++;
         }
     }
@@ -492,13 +481,13 @@ static mo_byte*            mo_lex_accept_number_float_postfix(struct cache_t* x,
         if (('+' == *pc) || ('-' == *pc)) {
             pc++;
         }
-        while (mo_cm[*pc] & (CM_DEC)) {
+        while (mo_cms[*pc] & (MO_CM_DEC)) {
             pc++;
         }
     }
 
     //  浮点数后面如果是字母结束，是错误的，比如：12.car
-    if (mo_cm[*pc] & (CM_ALPHA)) {
+    if (mo_cms[*pc] & (MO_CM_ALPHA)) {
         mo_result_errorf(r, 111, "");
         return x->pos;
     }
@@ -508,7 +497,7 @@ static mo_byte*            mo_lex_accept_number_float_postfix(struct cache_t* x,
     return x->pos;
 }
 
-MO_EXTERN   mo_byte*            mo_lex_accept_number(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+MO_EXTERN   mo_byte*            mo_lex_accept_number(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     if ('0' == *pc) {
         //  如果遇到十六进制前缀
@@ -517,7 +506,7 @@ MO_EXTERN   mo_byte*            mo_lex_accept_number(struct cache_t* x, struct t
         }
 
         //  如果遇到的是8进制前缀
-        if (mo_cm[pc[1]] & (CM_OCT)) {
+        if (mo_cms[pc[1]] & (MO_CM_OCT)) {
             return mo_lex_accept_number_oct(x, k, r, pc);
         }
 
@@ -527,7 +516,7 @@ MO_EXTERN   mo_byte*            mo_lex_accept_number(struct cache_t* x, struct t
         }
 
         //  如果遇到了字母，这种情况算作浮点数格式错误
-        if (mo_cm[pc[1]] & (CM_ALPHA)) {
+        if (mo_cms[pc[1]] & (MO_CM_ALPHA)) {
             mo_result_errorf(r, 111, "");
             return pc;
         }
@@ -537,7 +526,7 @@ MO_EXTERN   mo_byte*            mo_lex_accept_number(struct cache_t* x, struct t
     }
 
     //  如果起始字符就是十进制数字，那么当作十进制数字来识别
-    if (mo_cm[*pc] & (CM_DEC)) {
+    if (mo_cms[*pc] & (MO_CM_DEC)) {
         return mo_lex_accept_number_dec(x, k, r, pc);
     }
 
@@ -551,17 +540,17 @@ MO_EXTERN   mo_byte*            mo_lex_accept_number(struct cache_t* x, struct t
     return pc;
 }
 
-static mo_byte              mo_lex_accept_escape_char(struct cache_t* x, struct result_t* r, mo_byte** pc)
+static mo_byte              mo_lex_accept_escape_char(struct lex_t* x, struct result_t* r, mo_byte** pc)
 {
 
 }
 
 
-static mo_byte*            mo_lex_accept_string(struct cache_t* x, struct token_t* t, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_string(struct lex_t* x, struct token_t* t, struct result_t* r, mo_byte* pc)
 {
 RETRY:
     pc = x->pos + prefix_len;
-    while (0 == (mo_cm[(int)*pc] & CM_STRING_FLAG)) {
+    while (0 == (mo_cms[(int)*pc] & MO_CM_STRING_FLAG)) {
         pc++;
     }
 
