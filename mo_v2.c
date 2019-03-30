@@ -114,10 +114,17 @@ MO_EXTERN   struct cache_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next,
     return x;
 }
 
-MO_EXTERN   mo_token    mo_lex_next_token(struct cache_t* x, struct token_t* t, struct result_t* r)
+MO_EXTERN   mo_token    mo_lex_next_token(struct lex_t* x, struct token_t* t, struct result_t* r)
 {
-    return x->next(x->ctx, x, t, r);
+    return x->next(x, t, r);
 }
+
+MO_EXTERN   void        mo_lex_push_back(struct lex_t* x, struct token_t* k)
+{
+    k->prev = x->token;
+    x->token = k;
+}
+
 
 static void mo_sytx_del(void* y)
 {

@@ -40,7 +40,7 @@ struct result_t;
 struct token_t;
 struct unit_t;
 struct stream_t;
-struct lex_t;
+struct cache_t;
 struct sytx_t;
 struct compile_t;
 
@@ -66,7 +66,7 @@ typedef     void        (*MO_CLOSE_CALLBACK )(void* ctx);
 #define     MO_TOKEN_UNKNOWN    (0x00000000)
 #define     MO_TOKEN_EOF        (0xFFFFFFFE)
 #define     MO_TOKEN_ERROR      (0xFFFFFFFF)
-typedef     mo_token    (*MO_NEXT_CALLBACK  )(void* ctx, struct lex_t*  p, struct token_t* t, struct result_t* r);
+typedef     struct token_t*     (*MO_NEXT_CALLBACK  )(struct cache_t*  p, struct token_t* t, struct result_t* r);
 
 
 //  语法分析后返回的对当前 token 的处理建议
@@ -144,15 +144,6 @@ struct anchor_t
 };
 
 
-//  状态
-struct stats_t
-{
-    void*               prev;       //  前一个状态
-    int                 typeid;
-    int                 state;      //  当前的状态值
-};
-
-
 //  输入流对象
 struct stream_t
 {
@@ -180,36 +171,19 @@ struct lex_t
 {
     void*               prev;       //  前一个词法对象
     int                 typeid;     //  对象类型编号
+    void*               ctx;        //  词法识别的上下文
+    MO_NEXT_CALLBACK    next;       //  词法识别的函数
+
+    struct token_t*     token;      //  最近识别出来的一个符号
     struct stream_t*    stream;     //  输入流
     struct anchor_t*    anchor;     //  词法定位信息(直接引用自 stream 对象)
-    void*               ctx;        //  词法上下文
-    MO_NEXT_CALLBACK    next;       //  词法识别的函数
+
     int                 rsrv;       //  预留大小
     int                 cap;        //  数据缓冲区的总容量（总是等于：limit - buf）
     char*               pos;        //  当前识别位置指针
     char*               end;        //  有效数据结束位置，*end永远是\n
     char*               limit;      //  缓冲区结尾
     mo_byte             buf[0];     //  数据缓冲区
-};
-
-
-//  语法分析对象
-struct sytx_t
-{
-    void*               prev;       //  前一个词法对象
-    int                 typeid;       //  对象类型编号
-    struct unit_t*      unit;       //  语法识别单元
-};
-
-//  编译器
-struct compile_t
-{
-    void*               prev;
-    int                 typeid;
-    struct lex_t*       lex;
-    struct sytx_t*      sytx;
-    struct token_t*     token;
-    struct result_t*    result;
 };
 
 
@@ -231,13 +205,15 @@ MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t*  k);
 
 //  词法识别的接口
 MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);
-MO_EXTERN   struct lex_t*       mo_lex_init             (struct lex_t* x, void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
-MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
-MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
+MO_EXTERN   struct cache_t*     mo_lex_init             (struct cache_t* x, void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
+MO_EXTERN   void                mo_lex_push_stream      (struct cache_t* x, struct stream_t* m);
+MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct cache_t* x);
+MO_EXTERN   struct token_t*     mo_lex_next_token       (struct cache_t* x);
+MO_EXTERN   struct token_t*     mo_lex_push_back        (struct cache_t* x, struct token_t* k);
 
 //  语法识别的接口
 MO_EXTERN   struct unit_t*      mo_unit_new             (struct unit_t* u, void* ctx, MO_ACCEPT_CALLBACK accept);
-MO_EXTERN   struct sytx_t*      mo_sytx_init            (struct sytx_t* y, struct lex_t* x);
+MO_EXTERN   struct sytx_t*      mo_sytx_init            (struct sytx_t* y, struct cache_t* x);
 MO_EXTERN   void                mo_sytx_push_unit       (struct sytx_t* y, struct unit_t* u);
 MO_EXTERN   struct unit_t*      mo_sytx_top_unit        (struct sytx_t* y);
 MO_EXTERN   void                mo_sytx_drive           (struct sytx_t* y);

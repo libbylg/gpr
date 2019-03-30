@@ -273,7 +273,7 @@ static unsigned short mo_cm[256] =
 };
 
 
-MO_EXTERN mo_byte* mo_lex_skipspace(struct lex_t*  x, mo_byte* pc)
+MO_EXTERN mo_byte* mo_lex_skipspace(struct cache_t*  x, mo_byte* pc)
 {
     ///!    跳过所有的空白
     x->pos = pc;
@@ -286,9 +286,9 @@ MO_EXTERN mo_byte* mo_lex_skipspace(struct lex_t*  x, mo_byte* pc)
 }
 
 
-MO_EXTERN mo_byte* mo_lex_load_more(struct lex_t* x, struct result_t* r, mo_byte* pc)
+MO_EXTERN mo_byte* mo_lex_load_more(struct cache_t* x, struct result_t* r, mo_byte* pc)
 {
-    struct lex_t* cache = x;
+    struct cache_t* cache = x;
 
     //  先保存下pos的位置
     x->pos = pc;
@@ -330,9 +330,9 @@ RETRY:
 }
 
 //  定位到第一个非注释非空白处
-static mo_byte* mo_lex_locate(struct lex_t* x, struct result_t* r, mo_byte* pc)
+static mo_byte* mo_lex_locate(struct cache_t* x, struct result_t* r, mo_byte* pc)
 {
-    register struct lex_t*    cache;
+    register struct cache_t*    cache;
 
 RETRY:
     cache = x;
@@ -376,7 +376,7 @@ RETRY:
 }
 
 
-MO_EXTERN   mo_byte*            mo_lex_newline(struct lex_t* x, struct result_t* r, mo_byte* pc)
+MO_EXTERN   mo_byte*            mo_lex_newline(struct cache_t* x, struct result_t* r, mo_byte* pc)
 {
     x->anchor->lino++;  ///<    进入下一行
     x->anchor->line = pc + 1;
@@ -384,9 +384,9 @@ MO_EXTERN   mo_byte*            mo_lex_newline(struct lex_t* x, struct result_t*
     return x->pos;
 }
 
-MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline)
+MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct cache_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline)
 {
-    struct lex_t* cache = x;
+    struct cache_t* cache = x;
     pc = pc + pervsize;
     int escape_open = MO_FALSE;
     while (mo_result_ok(r)) {
@@ -426,7 +426,7 @@ MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struc
     }
 }
 
-static mo_byte*            mo_lex_accept_number_hex(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_number_hex(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     x->pos = pc + 2; //  跳过0x前缀
     while (mo_cm[*pc] & (CM_HEX)) {
@@ -441,7 +441,7 @@ static mo_byte*            mo_lex_accept_number_hex(struct lex_t* x, struct toke
     return x->pos;
 }
 
-static mo_byte*            mo_lex_accept_number_dec(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_number_dec(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     x->pos = pc + 1; //  跳过已经识别过的数字前缀
     while (mo_cm[*pc] & (CM_DEC)) {
@@ -461,7 +461,7 @@ static mo_byte*            mo_lex_accept_number_dec(struct lex_t* x, struct toke
     return x->pos;
 }
 
-static mo_byte*            mo_lex_accept_number_oct(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_number_oct(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     x->pos = pc + 1; //  跳过八进制的 0 前缀
     while (mo_cm[*pc] & (CM_OCT)) {
@@ -476,7 +476,7 @@ static mo_byte*            mo_lex_accept_number_oct(struct lex_t* x, struct toke
     return x->pos;
 }
 
-static mo_byte*            mo_lex_accept_number_float_postfix(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_number_float_postfix(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     //  如果是小数部分
     if ('.' == *pc) {
@@ -508,7 +508,7 @@ static mo_byte*            mo_lex_accept_number_float_postfix(struct lex_t* x, s
     return x->pos;
 }
 
-MO_EXTERN   mo_byte*            mo_lex_accept_number(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+MO_EXTERN   mo_byte*            mo_lex_accept_number(struct cache_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
 {
     if ('0' == *pc) {
         //  如果遇到十六进制前缀
@@ -551,13 +551,13 @@ MO_EXTERN   mo_byte*            mo_lex_accept_number(struct lex_t* x, struct tok
     return pc;
 }
 
-static mo_byte              mo_lex_accept_escape_char(struct lex_t* x, struct result_t* r, mo_byte** pc)
+static mo_byte              mo_lex_accept_escape_char(struct cache_t* x, struct result_t* r, mo_byte** pc)
 {
 
 }
 
 
-static mo_byte*            mo_lex_accept_string(struct lex_t* x, struct token_t* t, struct result_t* r, mo_byte* pc)
+static mo_byte*            mo_lex_accept_string(struct cache_t* x, struct token_t* t, struct result_t* r, mo_byte* pc)
 {
 RETRY:
     pc = x->pos + prefix_len;
