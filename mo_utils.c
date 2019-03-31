@@ -275,7 +275,7 @@ MO_EXTERN mo_byte* mo_lex_skipspace(struct lex_t*  x, mo_byte* pc)
 }
 
 
-MO_EXTERN mo_byte* mo_lex_load_more(struct lex_t* x, struct token_t* k, mo_byte* pc)
+MO_EXTERN mo_byte* mo_lex_loadmore(struct lex_t* x, struct result_t* r, mo_byte* pc)
 {
     struct lex_t* cache = x;
 
@@ -283,7 +283,7 @@ MO_EXTERN mo_byte* mo_lex_load_more(struct lex_t* x, struct token_t* k, mo_byte*
     x->pos = pc;
 
     //  如果缓冲区太过于靠近缓冲区的尾部，那么将数据移动一次
-    if ((x->limit - x->pos) < x->rsrv) {
+    if ((x->limit - x->pos) < MO_TOKEN_SIZE_MAX) {
         int offset = x->pos - x->buf;
         int len = x->end - x->pos;
         if (0 > len) {
@@ -314,12 +314,12 @@ RETRY:
         goto RETRY;
     }
 
-    mo_token_errorf(k, 111, "read from stream failed");
+    mo_result_errorf(r, 111, "read from stream failed");
     return x->pos;
 }
 
 //  定位到第一个非注释非空白处
-static mo_byte* mo_lex_locate(struct lex_t* x, mo_byte* pc)
+MO_EXTERN mo_byte* mo_lex_locate(struct lex_t* x, struct result_t* r, mo_byte* pc)
 {
     register struct lex_t*    cache;
 
@@ -331,8 +331,8 @@ RETRY:
     pc = mo_lex_skipspace(x, pc);
     
     //  如果预留的数据区太少，那么重新载入数据
-    if ((x->end - pc) < x->rsrv) {
-        pc = mo_lex_load_more(x, pc);
+    if ((x->end - pc) < MO_TOKEN_SIZE_MAX) {
+        pc = mo_lex_loadmore(x, r, pc);
     }
 
     //  如果遇到换行,需要判断到底是遇到真换行还是遇到的是缓冲区的数据被读取完了
@@ -343,12 +343,12 @@ RETRY:
 
     //  如果确实遇到了文本换行
     if (pc != x->end) {
-        mo_lex_newline(x, pc);
+        mo_lex_newline(x, r, pc);
         goto RETRY;
     }
 
     //  从缓冲区读取更多数据
-    pc = mo_lex_load_more(x, pc);
+    pc = mo_lex_loadmore(x, r, pc);
 
     //  如果读取失败，那么返回
     if (!mo_lex_ok(x)) {
@@ -373,16 +373,13 @@ MO_EXTERN   mo_byte*            mo_lex_newline(struct lex_t* x, struct result_t*
     return x->pos;
 }
 
-MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struct result_t* r, mo_byte* pc, int pervsize, mo_byte escape_newline)
+MO_EXTERN   mo_byte*            mo_lex_skipline(struct lex_t* x, struct result_t* r, mo_byte* pc)
 {
-    struct lex_t* cache = x;
-    pc = pc + pervsize;
-    int escape_open = MO_FALSE;
     while (mo_result_ok(r)) {
         if (*pc == '\n') {
             //  如果pc处的换行并不是真换行，而是缓冲区数据结束标记，那么尝试载入更多数据
             if (pc == x->end) {
-                pc = mo_lex_load_more(x, r, pc);
+                pc = mo_lex_loadmore(x, r, pc);
                 //  重新加载数据后，指针位置没有变化，说明没有更多数据了
                 if (pc == x->end) {
                     x->pos = pc;
@@ -394,23 +391,9 @@ MO_EXTERN   mo_byte*            mo_lex_singleline_comment(struct lex_t* x, struc
             }
 
             //  这里说明遇到了真换行，此时标记一下换行标记
-            mo_lex_newline(x, r, pc);
-
-            //  如果刚好遇到了换行符转义符号，那么注释变得可以跨行
-            if (MO_TRUE == escape_open) {
-                escape_open = MO_FALSE;
-                continue;
-            }
-
-            //  如果是个常规意义的换行，那么说明遇到了行尾，单行注释可以结束了
-            return x->pos;
+            return mo_lex_newline(x, r, pc);
         }
 
-        if (*pc == escape_newline) {
-            escape_open = MO_TRUE;
-        } else {
-            escape_open = MO_FALSE; //  TODO 这种方法性能较差，每个字符都要重置一次
-        }
         pc++;
     }
 }
@@ -497,8 +480,9 @@ static mo_byte*            mo_lex_accept_number_float_postfix(struct lex_t* x, s
     return x->pos;
 }
 
-MO_EXTERN   mo_byte*            mo_lex_accept_number(struct lex_t* x, struct token_t* k, struct result_t* r, mo_byte* pc)
+struct token_t*     mo_lex_accept_number(struct lex_t* x, struct token_t* k, struct result_t* r)
 {
+    mo_byte* pc = x->pos;
     if ('0' == *pc) {
         //  如果遇到十六进制前缀
         if (('x' == pc[1]) || ('X' == pc[1])) {
@@ -546,7 +530,7 @@ static mo_byte              mo_lex_accept_escape_char(struct lex_t* x, struct re
 }
 
 
-static struct token_t*  mo_lex_accept_string(struct lex_t* x, struct token_t* t)
+static struct token_t*  mo_lex_accept_string(struct lex_t* x, struct token_t* k, struct result_t* r)
 {
     mo_byte* pc = x->pos;
     pc++;
@@ -560,11 +544,11 @@ RETRY:
 
     if ('\"' == *pc) {
         pc++;
-        t->id      = MO_TOKEN_STRING;
-        t->text[0] = x->pos;
-        t->text[1] = pc;
+        k->id      = MO_TOKEN_STRING;
+        k->text[0] = x->pos;
+        k->text[1] = pc;
         x->pos = pc;
-        return x->pos;
+        return k;
     }
 
     if (*pc == '\\') {
@@ -583,70 +567,70 @@ RETRY:
             case 'u':
             case '\n':
                 if (pc >= x->end) {
-                    int ret = mo_lex_load_more(x, pc);
+                    int ret = mo_lex_loadmore(x, r, pc);
                     if (MO_READ_OK == ret) {
                         goto RETRY; //  TODO bug
                     }
 
                     if (MO_READ_ERROR == ret) {
                         //  转义字符数据识别失败
-                        mo_push_result(x->mo, mo_result_new("lex", 111, "load cache failed"));
-                        return MO_TOKEN_ERROR;
+                        mo_result_errorf(r, 111, "load cache failed");
+                        return k;
                     }
 
                     if (MO_READ_EOF == ret) {
                         //  字符串没有正确地结束
-                        mo_push_result(x->mo, mo_result_new("lex", 111, "string do not end correctly"));
-                        return MO_TOKEN_ERROR;
+                        mo_result_errorf(r, 111, "string do not end correctly");
+                        return k;
                     }
 
                     //  不支持的返回码
-                    mo_push_result(x->mo, mo_result_new("lex", 111, "unsupported returned value"));
-                    return MO_TOKEN_ERROR;
+                    mo_result_errorf(r, 111, "unsupported returned value");
+                    return k;
                 }
 
 
                 //  如果遇到真换行:字符串不允许跨行
-                mo_push_result(x->mo, mo_result_new("lex", 111, "string should be closed brfore new line"));
-                return MO_TOKEN_ERROR;
+                mo_result_errorf(r, 111, "string should be closed brfore new line");
+                return k;
             default:
                 //  不支持的转义字符
-                mo_push_result(x->mo, mo_result_new("lex", 111, "unrecogenized espace char"));
-                return MO_TOKEN_ERROR;
+                mo_result_errorf(r, 111, "unrecogenized espace char");
+                return k;
         }
     }
 
     if (*pc == '\n') {
         //  遇到的并不是真的换行符号
         if (pc >= x->end) {
-            int ret = mo_lex_load_more(x, t, r, pc);
+            int ret = mo_lex_loadmore(x, r, pc);
             if (MO_READ_OK == ret) {
                 goto RETRY;
             }
 
             if (MO_READ_ERROR == ret) {
                 mo_result_errorf(r, 111, "load cache failed");
-                return MO_TOKEN_ERROR;
+                return k;
             }
 
             //  MO_READ_EOF 这种情况直接结束当前处理
             if (MO_READ_EOF == ret) {
-                mo_result_errorf(r, 111, "string do not end correctly"));
-                return MO_TOKEN_ERROR;
+                mo_result_errorf(r, 111, "string do not end correctly");
+                return k;
             }
 
             //  不支持的返回码
-            mo_result_errorf(r, 111, "unsupported returned value"));
-            return MO_TOKEN_ERROR;
+            mo_result_errorf(r, 111, "unsupported returned value");
+            return k;
         }
 
         //  如果遇到的就是真换行符号
-        mo_push_result(x->mo, mo_result_new("lex", 111, "string do not end correctly"));
-        return MO_TOKEN_ERROR;
+        mo_result_errorf(r, 111, "string do not end correctly");
+        return k;
     }
 
     //  程序不应该走到这里
-    mo_push_result(x->mo, mo_result_new("lex", 111, "inner-error:string"));
-    return MO_TOKEN_ERROR;
+    mo_result_errorf(r, 111, "inner-error:string");
+    return k;
 }
 

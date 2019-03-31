@@ -128,9 +128,16 @@ MO_EXTERN struct token_t*  mo_token_new()
 }
 
 
+MO_EXTERN   mo_bool             mo_token_ok(struct token_t* k)
+{
+    return (MO_TOKEN_ERROR != k->id);
+}
+
 MO_EXTERN   struct token_t*     mo_token_clear(struct token_t*  k)
 {
-
+    k->id = MO_TOKEN_UNKNOEN;
+    k->opts = 0;
+    return k;
 }
 
 

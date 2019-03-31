@@ -17,10 +17,8 @@ struct stream_string_t
 static void stream_string_del(void* obj)
 {
     struct stream_string_t* stream = (struct stream_string_t*)(obj);
-    if (stream->auto_free)
-    {
-        if (NULL != stream->data)
-        {
+    if (stream->auto_free) {
+        if (NULL != stream->data) {
             free(stream->data);
         }
     }

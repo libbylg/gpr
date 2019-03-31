@@ -28,11 +28,13 @@
 typedef int                 mo_bool;
 typedef int                 mo_errno;
 typedef unsigned char       mo_byte;
-typedef unsigned int        mo_cm
-#ifdef _MSCVER
+typedef unsigned int        mo_cm;
+#ifdef _MSC_VER
 typedef __int64             mo_int64;
-#else
 typedef unsigned __int64    mo_uint64;
+#else
+typedef long long           mo_int64;
+typedef unsigned long long  mo_uint64;
 #endif
 
 
@@ -103,6 +105,8 @@ MO_DEFINE(struct result_t,
 
 
 //  词法识别出来的符号
+
+#define MO_TOKEN_SIZE_MAX   (32)
 MO_DEFINE(struct token_t,
 {
     int                 size;       //  整个token所占的存储空间
@@ -112,8 +116,8 @@ MO_DEFINE(struct token_t,
     {
         struct
         {
-            char*       val_str[2]; //  符号的文本范围
-            char        text[64];   //  符号的文本范围
+            char*       val_str[2];                 //  符号的文本指针
+            char        text[MO_TOKEN_SIZE_MAX];    //  符号的文本内容
         };
         struct
         {
@@ -152,7 +156,6 @@ MO_DEFINE(struct stream_t,
 });
 
 
-
 //  词法分析对象
 MO_DEFINE(struct lex_t,
 {
@@ -163,11 +166,10 @@ MO_DEFINE(struct lex_t,
     MO_NEXT_CALLBACK    next;       //  词法识别的函数
     //
     struct result_t*    result;     //  当前的结果
-    struct token_t*     token;      //  最近识别出来的一个符号
+    struct token_t*     token;      //  最近识别出来的一个符号,mo_lex_push_back函数会将回退的token暂存到这里
     struct stream_t*    stream;     //  输入流
     struct anchor_t*    anchor;     //  词法定位信息(直接引用自 stream 对象)
     //
-    int                 rsrv;       //  预留大小
     int                 cap;        //  数据缓冲区的总容量（总是等于：limit - buf）
     char*               pos;        //  当前识别位置指针
     char*               end;        //  有效数据结束位置，*end永远是\n
@@ -214,7 +216,7 @@ MO_EXTERN   mo_bool             mo_token_ok             (struct token_t* k);
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t* k);
 
 
-//  构造流对象的函数
+//  词法识别的接口
 MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);
 
 
@@ -223,7 +225,7 @@ MO_EXTERN   struct lex_t*       mo_lex_new              (void* ctx, MO_NEXT_CALL
 MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
 MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
 MO_EXTERN   struct token_t*     mo_lex_next_token       (struct lex_t* x, struct token_t* k);
-MO_EXTERN   void                mo_lex_push_back(struct lex_t* x, struct token_t* k);
+MO_EXTERN   void                mo_lex_push_back        (struct lex_t* x, struct token_t* k);
 
 
 #define MO_ACCEPT(lex,pc,funccall)  \
