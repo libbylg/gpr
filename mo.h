@@ -25,10 +25,15 @@
 #define MO_ASSERT(expr,msg) assert()
 
 
-typedef int             mo_bool;
-typedef int             mo_errno;
-typedef unsigned char   mo_byte;
-typedef unsigned int    mo_cm;
+typedef int                 mo_bool;
+typedef int                 mo_errno;
+typedef unsigned char       mo_byte;
+typedef unsigned int        mo_cm
+#ifdef _MSCVER
+typedef __int64             mo_int64;
+#else
+typedef unsigned __int64    mo_uint64;
+#endif
 
 
 #define MO_FALSE        (!!0)
@@ -39,9 +44,6 @@ struct token_t;
 struct lex_t;
 struct stream_t;
 
-
-//  用于result
-#define MO_OK               (0)
 
 
 
@@ -91,6 +93,15 @@ struct class_t
     }
 
 
+//  结果
+#define MO_OK               (0)
+MO_DEFINE(struct result_t,
+{
+    int         error;      //  错误码
+    char        desc[500];  //  错误描述
+});
+
+
 //  词法识别出来的符号
 MO_DEFINE(struct token_t,
 {
@@ -99,18 +110,22 @@ MO_DEFINE(struct token_t,
     int                 opts;       //  选项
     union 
     {
-        struct 
+        struct
         {
-            char        text[64];    //  符号的文本范围
-        };
-        struct 
-        {
-            char*       ref[2];     //  符号的文本范围
+            char*       val_str[2]; //  符号的文本范围
+            char        text[64];   //  符号的文本范围
         };
         struct
         {
-            int         error;      //  错误码
-            char        desc[500];  //  错误描述
+            mo_int64    val_int64;
+        };
+        struct
+        {
+            mo_uint64   val_uint64;
+        };
+        struct
+        {
+            double      val_double;
         };
     };
 });
@@ -147,6 +162,7 @@ MO_DEFINE(struct lex_t,
     void*               ctx;        //  词法识别的上下文
     MO_NEXT_CALLBACK    next;       //  词法识别的函数
     //
+    struct result_t*    result;     //  当前的结果
     struct token_t*     token;      //  最近识别出来的一个符号
     struct stream_t*    stream;     //  输入流
     struct anchor_t*    anchor;     //  词法定位信息(直接引用自 stream 对象)
@@ -179,19 +195,41 @@ MO_EXTERN   int                 mo_typeid_of            (char* name);
 MO_EXTERN   void                mo_object_del           (void* obj);
 
 
+//  结果对象
+MO_EXTERN   mo_bool             mo_result_ok            (struct result_t* x);
+MO_EXTERN   struct result_t*    mo_result_errorf        (struct result_t* x, int error, char* format, ...);
+MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* x);
+
+
+//  符号操作
+#define MO_TOKEN_UNKNOEN        (-1)
+#define MO_TOKEN_ERROR          (-2)
+#define MO_TOKEN_EOF            (-3)
+#define MO_TOKEN_STRING         (-300)
+#define MO_TOKEN_NAME           (-301)
+#define MO_TOKEN_INTEGER        (-302)
+#define MO_TOKEN_FLOAT          (-303)
 MO_EXTERN   struct token_t*     mo_token_new            ();
+MO_EXTERN   mo_bool             mo_token_ok             (struct token_t* k);
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t* k);
-MO_EXTERN   struct token_t*     mo_token_errorf         (struct token_t* k, int error, char* format, ...);
+
+
+//  构造流对象的函数
+MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);
+
 
 //  词法识别的接口
-MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);
-MO_EXTERN   struct lex_t*       mo_lex_new              (void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv);
+MO_EXTERN   struct lex_t*       mo_lex_new              (void* ctx, MO_NEXT_CALLBACK   next, int cap);
 MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
 MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
 MO_EXTERN   struct token_t*     mo_lex_next_token       (struct lex_t* x, struct token_t* k);
-MO_EXTERN   void                mo_lex_push_back        (struct lex_t* x, struct token_t* k);
+MO_EXTERN   void                mo_lex_push_back(struct lex_t* x, struct token_t* k);
 
 
+#define MO_ACCEPT(lex,pc,funccall)  \
+    (lex)->pos = pc;                \
+    (funccall);                     \
+    pc = (lex)->pos;
 
 
 #endif//__mo_

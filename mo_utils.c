@@ -275,7 +275,7 @@ MO_EXTERN mo_byte* mo_lex_skipspace(struct lex_t*  x, mo_byte* pc)
 }
 
 
-MO_EXTERN mo_byte* mo_lex_load_more(struct lex_t* x, struct result_t* r, mo_byte* pc)
+MO_EXTERN mo_byte* mo_lex_load_more(struct lex_t* x, struct token_t* k, mo_byte* pc)
 {
     struct lex_t* cache = x;
 
@@ -314,12 +314,12 @@ RETRY:
         goto RETRY;
     }
 
-    mo_result_errorf(r, 111, "read from stream failed");
+    mo_token_errorf(k, 111, "read from stream failed");
     return x->pos;
 }
 
 //  定位到第一个非注释非空白处
-static mo_byte* mo_lex_locate(struct lex_t* x, struct result_t* r, mo_byte* pc)
+static mo_byte* mo_lex_locate(struct lex_t* x, mo_byte* pc)
 {
     register struct lex_t*    cache;
 
@@ -332,7 +332,7 @@ RETRY:
     
     //  如果预留的数据区太少，那么重新载入数据
     if ((x->end - pc) < x->rsrv) {
-        pc = mo_lex_load_more(x, r, pc);
+        pc = mo_lex_load_more(x, pc);
     }
 
     //  如果遇到换行,需要判断到底是遇到真换行还是遇到的是缓冲区的数据被读取完了
@@ -343,15 +343,15 @@ RETRY:
 
     //  如果确实遇到了文本换行
     if (pc != x->end) {
-        mo_lex_newline(x, r, pc);
+        mo_lex_newline(x, pc);
         goto RETRY;
     }
 
     //  从缓冲区读取更多数据
-    pc = mo_lex_load_more(x, r, pc);
+    pc = mo_lex_load_more(x, pc);
 
     //  如果读取失败，那么返回
-    if (!mo_result_ok(r)) {
+    if (!mo_lex_ok(x)) {
         return x->pos;
     }
 
@@ -546,21 +546,25 @@ static mo_byte              mo_lex_accept_escape_char(struct lex_t* x, struct re
 }
 
 
-static mo_byte*            mo_lex_accept_string(struct lex_t* x, struct token_t* t, struct result_t* r, mo_byte* pc)
+static struct token_t*  mo_lex_accept_string(struct lex_t* x, struct token_t* t)
 {
+    mo_byte* pc = x->pos;
+    pc++;
+
+    mo_byte first = *pc;
+
 RETRY:
-    pc = x->pos + prefix_len;
     while (0 == (mo_cms[(int)*pc] & MO_CM_STRING_FLAG)) {
         pc++;
     }
 
     if ('\"' == *pc) {
         pc++;
-        t->token = MO_TOKEN_STRING;
-        t->text[0] = x->pc;
+        t->id      = MO_TOKEN_STRING;
+        t->text[0] = x->pos;
         t->text[1] = pc;
         x->pos = pc;
-        return MO_TOKEN_STRING;
+        return x->pos;
     }
 
     if (*pc == '\\') {
@@ -579,8 +583,7 @@ RETRY:
             case 'u':
             case '\n':
                 if (pc >= x->end) {
-                    prefix_len = ((pc - x->pos) - 1);    ///<    由于碰到转义字符,所以实际识别出来的数据长度应该少一个字符
-                    int ret = mo_cache_load(cache);
+                    int ret = mo_lex_load_more(x, pc);
                     if (MO_READ_OK == ret) {
                         goto RETRY; //  TODO bug
                     }

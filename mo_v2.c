@@ -79,6 +79,34 @@ MO_EXTERN   void                mo_object_del(void* obj)
     }
 }
 
+
+MO_EXTERN   mo_bool             mo_result_ok(struct result_t* r)
+{
+    return (MO_OK == r->error);
+}
+
+
+
+MO_EXTERN   struct result_t*    mo_result_errorf(struct result_t* r, int error, char* format, ...)
+{
+    r->error = error;
+    va_list va;
+    va_start(va, format);
+    _vsnprintf(r->desc, sizeof(r->desc), format, va);
+    r->desc[sizeof(r->desc) - 1] = '\0';
+    va_end(va);
+
+    return r;
+}
+
+
+MO_EXTERN   struct result_t*    mo_result_clear(struct result_t* r)
+{
+    r->error = MO_OK;
+    r->desc[0] = '\0';
+}
+
+
 static void mo_token_del(void* o)
 {
 
@@ -96,7 +124,6 @@ MO_EXTERN struct token_t*  mo_token_new()
     k->size = sizeof(struct token_t);
     k->id = MO_TOKEN_UNKNOWN;
     k->opts = 0;
-    k->error = MO_OK;
     return k;
 }
 
@@ -104,19 +131,6 @@ MO_EXTERN struct token_t*  mo_token_new()
 MO_EXTERN   struct token_t*     mo_token_clear(struct token_t*  k)
 {
 
-}
-
-
-MO_EXTERN   struct token_t*    mo_token_errorf(struct token_t* r, int error, char* format, ...)
-{
-    r->error = error;
-    va_list va;
-    va_start(va, format);
-    _vsnprintf(r->desc, sizeof(r->desc), format, va);
-    r->desc[sizeof(r->desc) - 1] = '\0';
-    va_end(va);
-
-    return r;
 }
 
 
@@ -147,7 +161,7 @@ static   void   mo_lex_del(void* x)
     //  TODO
 }
 
-MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, int cap, int rsrv)
+MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, int cap)
 {
     int size = sizeof(struct lex_t);
     struct lex_t* x = (struct lex_t*)malloc(size);
@@ -155,7 +169,7 @@ MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, i
         return NULL;;
     }
 
-    mo_byte* buf = (mo_byte*)malloc(cap + rsrv + sizeof(void*));
+    mo_byte* buf = (mo_byte*)malloc(cap + 32 + sizeof(void*));
     if (NULL == buf) {
         free(x);
         return NULL;
@@ -209,5 +223,3 @@ MO_EXTERN   void        mo_lex_push_back(struct lex_t* x, struct token_t* k)
     k->prev = x->token;
     x->token = k;
 }
-
-
