@@ -65,7 +65,7 @@ typedef     void        (*MO_CLOSE_CALLBACK )(void* ctx);
 #define     MO_TOKEN_UNKNOWN    (-1)
 #define     MO_TOKEN_EOF        (-2)
 #define     MO_TOKEN_ERROR      (-3)
-typedef     struct token_t*     (*MO_NEXT_CALLBACK  )(struct lex_t* x, struct token_t* t);
+typedef     struct token_t*     (*MO_NEXT_CALLBACK)(void* ctx, struct lex_t* x, struct token_t* t, struct result_t* r);
 
 
 //  对象
@@ -179,14 +179,15 @@ MO_DEFINE(struct lex_t,
 
 
 //  默认的字符映射对象
-#define MO_CM_DEC                  (0x01000000)
-#define MO_CM_HEX                  (0x02000000)
-#define MO_CM_OCT                  (0x04000000)
-#define MO_CM_NEWLINE              (0x08000000)
-#define MO_CM_SPACE                (0x10000000)
-#define MO_CM_ALPHA                (0x20000000)
-#define MO_CM_STRING_FLAG          (0x40000000)
-#define MO_CM_COMMENT_FLAG         (0x80000000)
+#define MO_CM_DEC                  (0x00100000)
+#define MO_CM_HEX                  (0x00200000)
+#define MO_CM_OCT                  (0x00400000)
+#define MO_CM_NEWLINE              (0x00800000)
+#define MO_CM_SPACE                (0x01000000)
+#define MO_CM_ALPHA                (0x02000000)
+#define MO_CM_STRING_FLAG          (0x04000000)
+#define MO_CM_COMMENT_FLAG         (0x08000000)
+#define MO_CM_UDRLINE              (0x10000000)
 MO_EXTERN   mo_cm*              mo_cms_default();
 
 
@@ -198,9 +199,11 @@ MO_EXTERN   void                mo_object_del           (void* obj);
 
 
 //  结果对象
-MO_EXTERN   mo_bool             mo_result_ok            (struct result_t* x);
-MO_EXTERN   struct result_t*    mo_result_errorf        (struct result_t* x, int error, char* format, ...);
-MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* x);
+MO_EXTERN   struct result_t*    mo_result_new           ();
+MO_EXTERN   mo_bool             mo_result_ok            (struct result_t* r);
+MO_EXTERN   struct result_t*    mo_result_errorf        (struct result_t* r, int error, char* format, ...);
+MO_EXTERN   struct result_t*    mo_result_verrorf       (struct result_t* r, int error, char* format, va_list args);
+MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* r);
 
 
 //  符号操作
@@ -214,7 +217,8 @@ MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* x);
 MO_EXTERN   struct token_t*     mo_token_new            ();
 MO_EXTERN   mo_bool             mo_token_ok             (struct token_t* k);
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t* k);
-
+MO_EXTERN   struct token_t*     mo_token_errorf         (struct token_t* k, struct result_t* r, int error, char* format, ...);
+MO_EXTERN   struct token_t*     mo_token_as             (struct token_t* k, int id, mo_byte* bgn, mo_byte* end);
 
 //  词法识别的接口
 MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);
@@ -224,7 +228,7 @@ MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALL
 MO_EXTERN   struct lex_t*       mo_lex_new              (void* ctx, MO_NEXT_CALLBACK   next, int cap);
 MO_EXTERN   void                mo_lex_push_stream      (struct lex_t* x, struct stream_t* m);
 MO_EXTERN   struct stream_t*    mo_lex_pop_stream       (struct lex_t* x);
-MO_EXTERN   struct token_t*     mo_lex_next_token       (struct lex_t* x, struct token_t* k);
+MO_EXTERN   struct token_t*     mo_lex_next_token       (struct lex_t* x, struct token_t* k, struct result_t* r);
 MO_EXTERN   void                mo_lex_push_back        (struct lex_t* x, struct token_t* k);
 
 

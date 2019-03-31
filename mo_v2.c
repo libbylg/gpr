@@ -11,7 +11,7 @@
 static int                 mo_classes_count = 0;
 static struct class_t      mo_classes[100] = {0};
 
-static void mo_class_del(void* obj)
+static void                     mo_class_del(void* obj)
 {
     //  DO-NOTHING 类是不可删除的
 }
@@ -79,6 +79,19 @@ MO_EXTERN   void                mo_object_del(void* obj)
     }
 }
 
+static      void                mo_result_del(void* obj)
+{
+    //TODO
+}
+
+MO_EXTERN   struct result_t*    mo_result_new()
+{
+    struct result_t* r = (struct result_t*)malloc(sizeof(struct result_t));
+    r->prev = NULL;
+    r->typeid = mo_define_class("result_t", );
+    r->error = MO_OK;
+    r->desc[0] = '\0';
+}
 
 MO_EXTERN   mo_bool             mo_result_ok(struct result_t* r)
 {
@@ -89,13 +102,11 @@ MO_EXTERN   mo_bool             mo_result_ok(struct result_t* r)
 
 MO_EXTERN   struct result_t*    mo_result_errorf(struct result_t* r, int error, char* format, ...)
 {
-    r->error = error;
+    
     va_list va;
     va_start(va, format);
-    _vsnprintf(r->desc, sizeof(r->desc), format, va);
-    r->desc[sizeof(r->desc) - 1] = '\0';
+    r = mo_result_verrorf(r, error, format, va);
     va_end(va);
-
     return r;
 }
 
@@ -106,13 +117,21 @@ MO_EXTERN   struct result_t*    mo_result_clear(struct result_t* r)
     r->desc[0] = '\0';
 }
 
+MO_EXTERN   struct token_t*     mo_result_verrorf(struct result_t* r, int error, char* format, va_list args)
+{
+    r->error = error;
+    _vsnprintf(r->desc, sizeof(r->desc), format, args);
+    r->desc[sizeof(r->desc) - 1] = '\0';
+    return r;
+}
 
-static void mo_token_del(void* o)
+
+static void                     mo_token_del(void* o)
 {
 
 }
 
-MO_EXTERN struct token_t*  mo_token_new()
+MO_EXTERN struct token_t*       mo_token_new()
 {
     struct token_t* k = (struct token_t*)malloc(sizeof(struct token_t));
     if (NULL == k) {
@@ -140,6 +159,16 @@ MO_EXTERN   struct token_t*     mo_token_clear(struct token_t*  k)
     return k;
 }
 
+MO_EXTERN   struct token_t*     mo_token_errorf         (struct token_t* k, struct result_t* r, int error, char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    mo_result_verrorf(r, error, format, args);
+    va_end(args);
+
+    k->id = MO_TOKEN_ERROR;
+    return k;
+}
 
 static   void                   mo_stream_del(void* m)
 {
@@ -191,7 +220,6 @@ MO_EXTERN   struct lex_t*       mo_lex_new(void* ctx, MO_NEXT_CALLBACK   next, i
     x->stream = NULL;
     x->anchor = NULL;
 
-    x->rsrv = rsrv;
     x->cap = cap;
     x->pos = x->buf;
     x->end = x->pos;
@@ -217,15 +245,15 @@ MO_EXTERN   struct stream_t*    mo_lex_pop_stream(struct lex_t* x)
     return top;
 }
 
-MO_EXTERN   struct token_t*     mo_lex_next_token(struct lex_t* x, struct token_t* k)
+MO_EXTERN   struct token_t*     mo_lex_next_token(struct lex_t* x, struct token_t* k, struct result_t* r)
 {
     if (NULL == k) {
         k = mo_token_new();
     }
-    return x->next(x, k);
+    return x->next(x->ctx, x, k, r);
 }
 
-MO_EXTERN   void        mo_lex_push_back(struct lex_t* x, struct token_t* k)
+MO_EXTERN   void                mo_lex_push_back(struct lex_t* x, struct token_t* k)
 {
     k->prev = x->token;
     x->token = k;
