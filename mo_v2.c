@@ -170,6 +170,25 @@ MO_EXTERN   struct token_t*     mo_token_errorf         (struct token_t* k, stru
     return k;
 }
 
+MO_EXTERN   struct token_t*     mo_token_as(struct token_t* k, int id, int opts, mo_byte* bgn, mo_byte* end)
+{
+    if (NULL == k) {
+        k = mo_token_new();
+        if (NULL == k) {
+            return NULL;
+        }
+    }
+
+    k->id = id;
+    k->opts = opts;
+    if ((NULL != bgn) && (NULL != end)) {
+        k->val_str[0] = bgn;
+        k->val_str[1] = end;
+    }
+
+    return k;
+}
+
 static   void                   mo_stream_del(void* m)
 {
 

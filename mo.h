@@ -218,7 +218,7 @@ MO_EXTERN   struct token_t*     mo_token_new            ();
 MO_EXTERN   mo_bool             mo_token_ok             (struct token_t* k);
 MO_EXTERN   struct token_t*     mo_token_clear          (struct token_t* k);
 MO_EXTERN   struct token_t*     mo_token_errorf         (struct token_t* k, struct result_t* r, int error, char* format, ...);
-MO_EXTERN   struct token_t*     mo_token_as             (struct token_t* k, int id, mo_byte* bgn, mo_byte* end);
+MO_EXTERN   struct token_t*     mo_token_as             (struct token_t* k, int id, int opts, mo_byte* bgn, mo_byte* end);
 
 //  词法识别的接口
 MO_EXTERN   struct stream_t*    mo_stream_new           (void* ctx, MO_READ_CALLBACK   read, MO_CLOSE_CALLBACK close);

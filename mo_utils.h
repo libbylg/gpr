@@ -22,10 +22,10 @@ MO_EXTERN   mo_byte*            mo_lex_newline(struct lex_t* x, struct result_t*
 //  从pc的位置定位到新行的开始处，通常使用该能力处理注释
 MO_EXTERN   mo_byte*            mo_lex_skipline(struct lex_t* x, struct result_t* r, mo_byte* pc);
 
-//  收取一个
+//  收取几种内建的类型
 MO_EXTERN   struct token_t*     mo_lex_accept_number(struct lex_t* x, struct token_t* k, struct result_t* r);
-
 MO_EXTERN   struct token_t*     mo_lex_accept_string(struct lex_t* x, struct token_t* k, struct result_t* r);
+MO_EXTERN   struct token_t*     mo_lex_accept_name(struct lex_t* x, struct token_t* k, struct result_t* r);
 
 #endif//__mo_utils_
 

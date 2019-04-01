@@ -12,7 +12,8 @@
 static struct token_t*  demo_lex_next(void* ctx, struct lex_t* x, struct token_t* k, struct result_t* r)
 {
     mo_byte* pc = x->pos;
-    while (1) {
+    while (mo_result_ok(r)) {
+
         //  跳过空白和空行并确保当前位置为有效识别字符
         pc = mo_lex_locate(x, r, pc);
 
@@ -46,7 +47,7 @@ static struct token_t*  demo_lex_next(void* ctx, struct lex_t* x, struct token_t
             case '{':
             case '}':
                 x->pos = pc + 1;
-                return mo_token_as(k, x->pos, NULL, NULL);
+                return mo_token_as(k, *pc, 0, NULL, NULL);
             case '0':
             case '1':
             case '2':

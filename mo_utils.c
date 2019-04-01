@@ -98,7 +98,7 @@ static mo_cm mo_cms[256] =
 /*  0x5C    \     92    */  MO_CM_STRING_FLAG,
 /*  0x5D    ]     93    */  0,
 /*  0x5E    ^     94    */  0,
-/*  0x5F    _     95    */  MO_CM_ALPHA,
+/*  0x5F    _     95    */  MO_CM_ALPHA | MO_CM_UDRLINE,
 /*  0x60    `     96    */  0,
 /*  0x61    a     97    */  MO_CM_ALPHA | MO_CM_HEX,
 /*  0x62    b     98    */  MO_CM_ALPHA | MO_CM_HEX,
@@ -282,10 +282,30 @@ MO_EXTERN mo_byte* mo_lex_skipcomment(struct lex_t*  x, struct result_t* r, mo_b
     }
 
     if ((pc[0] == '/') && (pc[1] == '*')) {
-        
+        pc += 2;
+
+        while (mo_result_ok(r)) {
+            while (!(mo_cms[*pc] & (MO_CM_COMMENT_FLAG))) {
+                pc++;
+            }
+
+            if ((pc[0] == '*') && (pc[1] == '/')) {
+                x->pos = pc + 2;
+                return x->pos;
+            }
+
+            if ((x->end - pc) < 2) {
+                pc = mo_lex_loadmore(x, r, pc);
+                if ((x->end - pc) < 2) {
+                    mo_result_errorf(r, 111, "Comment not end with '*/'");
+                    return x->pos;
+                }
+            }
+        }
     }
 
-
+    mo_result_errorf(r, 111, "Comment not begin with '/*' and '//'");
+    return x->pos;
 }
 
 MO_EXTERN mo_byte* mo_lex_loadmore(struct lex_t* x, struct result_t* r, mo_byte* pc)
@@ -341,7 +361,7 @@ RETRY:
     pc = x->pos;
 
     //  跳过所有的空白
-    pc = mo_lex_skipspace(x, pc);
+    pc = mo_lex_skipspace(x, r, pc);
     
     //  如果预留的数据区太少，那么重新载入数据
     if ((x->end - pc) < MO_TOKEN_SIZE_MAX) {
@@ -647,7 +667,7 @@ RETRY:
     return k;
 }
 
-MO_EXTERN struct token_t*  mo_lex_accept_name(struct lex_t* x, struct token_t* k, struct result_t* r)
+MO_EXTERN struct token_t*       mo_lex_accept_name(struct lex_t* x, struct token_t* k, struct result_t* r)
 {
     mo_byte* pc = x->pos + 1;
     while (mo_result_ok(r)) {
@@ -665,10 +685,11 @@ MO_EXTERN struct token_t*  mo_lex_accept_name(struct lex_t* x, struct token_t* k
             }
         }
 
-        return mo_token_as(k, MO_TOKEN_NAME, x->pos, pc);
+        return mo_token_as(k, MO_TOKEN_NAME, 0, x->pos, pc);
     }
 
     return mo_token_errorf(k, r, x->pos, 111, "");  //  TODO 是否可以使用错误栈
 }
+
 
 
