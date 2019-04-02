@@ -61,10 +61,7 @@ typedef     int         (*MO_READ_CALLBACK  )(void* ctx, char** pos, char* end);
 typedef     void        (*MO_CLOSE_CALLBACK )(void* ctx);
 
 
-//  几个内定的词法编号
-#define     MO_TOKEN_UNKNOWN    (-1)
-#define     MO_TOKEN_EOF        (-2)
-#define     MO_TOKEN_ERROR      (-3)
+//  识别词法的函数
 typedef     struct token_t*     (*MO_NEXT_CALLBACK)(void* ctx, struct lex_t* x, struct token_t* t, struct result_t* r);
 
 
@@ -76,23 +73,21 @@ struct object_t
 };
 
 
-//  类（注意，类也是一个对象）
-struct class_t
+//  类型定义宏
+#define MO_DEFINE(cls_name, body)   \
+    cls_name {                      \
+        void*   prev;               \
+        int     typeid;             \
+        struct  body;               \
+    }
+
+
+//  类（类也是一个对象）
+MO_DEFINE(struct class_t,
 {
-    void*               prev;
-    int                 typeid;
     char                name[64];
     MO_DEL_CALLBACK     del;
-};
-
-
-//  类型定义宏
-#define MO_DEFINE(cls_name, body)  \
-    cls_name{                   \
-        void*   prev;           \
-        int     typeid;         \
-        struct  body;           \
-    }
+});
 
 
 //  结果
@@ -147,8 +142,6 @@ struct anchor_t
 //  输入流对象
 MO_DEFINE(struct stream_t,
 {
-    void*               prev;   //  前一个流对象
-    int                 typeid;
     struct anchor_t     anchor; //  词法识别的锚点信息
     void*               ctx;    //  流对象的上下文
     MO_CLOSE_CALLBACK   close;  //  流关闭函数
@@ -159,9 +152,6 @@ MO_DEFINE(struct stream_t,
 //  词法分析对象
 MO_DEFINE(struct lex_t,
 {
-    void*               prev;       //  前一个词法对象
-    int                 typeid;     //  对象类型编号
-    //
     void*               ctx;        //  词法识别的上下文
     MO_NEXT_CALLBACK    next;       //  词法识别的函数
     //
@@ -207,7 +197,7 @@ MO_EXTERN   struct result_t*    mo_result_clear         (struct result_t* r);
 
 
 //  符号操作
-#define MO_TOKEN_UNKNOEN        (-1)
+#define MO_TOKEN_UNKNOWN        (-1)
 #define MO_TOKEN_ERROR          (-2)
 #define MO_TOKEN_EOF            (-3)
 #define MO_TOKEN_STRING         (-300)

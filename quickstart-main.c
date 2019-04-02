@@ -20,7 +20,7 @@ static struct token_t*  demo_lex_next(void* ctx, struct lex_t* x, struct token_t
         switch (*pc) {
             case '\n':
                 if (pc == x->end) {
-                    return MO_TOKEN_EOF;
+                    return mo_token_as(k, MO_TOKEN_EOF, 0, NULL, NULL);
                 }
                 return mo_token_errorf(k, r, 112, "");
             case '/':
@@ -111,12 +111,12 @@ static struct token_t*  demo_lex_next(void* ctx, struct lex_t* x, struct token_t
             case 'X':
             case 'Y':
             case 'Z':
-                return mo_accept_name(x, k, r);
+                return mo_lex_accept_name(x, k, r);
             default:    //'!' '#' '$' '%' '&' '*' ':' '?' '@' '~' '|' '\\' '^' '_' '`'
                 return mo_token_errorf(k, r, 111, "不支持的符号");
         }
     }
-    return MO_TOKEN_UNKNOWN;
+    return mo_token_as(k, MO_TOKEN_UNKNOWN, 0, NULL, NULL);
 }
 
 int main(int argc, char* args[])
